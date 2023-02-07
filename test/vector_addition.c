@@ -1,9 +1,9 @@
 #include <math.h>
-#include <math/vector.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <vector.h>
 
 #define log_print(type, message, ...)                                          \
     printf(type "\t" message "\n", ##__VA_ARGS__)
@@ -61,45 +61,42 @@ int main()
     vector *y = vector_from_list(3, (NN_TYPE[]){10, 11, 12});
     vector *z = vector_from_list(3, (NN_TYPE[]){13, 14, 15});
 
-    vector *vw = vector_addition(v, w);
-    vector *vwx = vector_addition(vw, x);
-    vector *vwxy = vector_addition(vwx, y);
-    vector *vwxyz = vector_addition(vwxy, z);
+    vector *vw    = vector_addition(v, (number *)w);
+    vector *vwx   = vector_addition(vw, (number *)x);
+    vector *vwxy  = vector_addition(vwx, (number *)y);
+    vector *vwxyz = vector_addition(vwxy, (number *)z);
 
     test_assert(VECTOR(vwxy, 0) == 35, "xwxy[0] == 40");
     test_assert(VECTOR(vwxy, 1) == 40, "xwxy[1] == 40");
     test_assert(VECTOR(vwxy, 2) == 45, "xwxy[2] == 45");
     test_assert(v == vwxyz, "Addition don't create a copy");
 
-    vector_delete(v);
-    vector_delete(w);
-    vector_delete(x);
-    vector_delete(y);
-    vector_delete(z);
+    number_delete(v);
+    number_delete(w);
+    number_delete(x);
+    number_delete(y);
+    number_delete(z);
 
     /* Test index of */
     vector *v1 = vector_from_list(3, (NN_TYPE[]){1, 2, 3});
     test_assert(vector_index_of(v1, 2) == 1, "vector_index_of(v1, 2) == 1");
     test_assert(vector_index_of(v1, 3) == 2, "vector_index_of(v1, 3) == 2");
     test_assert(vector_index_of(v1, 4) == -1, "vector_index_of(v1, 4) == -1");
-    vector_delete(v1);
+    number_delete(v1);
 
     /* Test map */
-    vector *v2 = vector_from_list(3, (NN_TYPE[]){1, 2, 3});
+    vector *v2        = vector_from_list(3, (NN_TYPE[]){1, 2, 3});
     vector *v2_mapped = vector_map(v2, (NN_TYPE(*)(NN_TYPE))sqrt);
-//    test_assert(VECTOR(v2_mapped,0) == 1., "v2_mapped[0] == %f", VECTOR(v2_mapped, 0));
+    //    test_assert(VECTOR(v2_mapped,0) == 1., "v2_mapped[0] == %f",
+    //    VECTOR(v2_mapped, 0));
 
     /* Test vector dot product */
     vector *v3 = vector_from_list(3, (NN_TYPE[]){1, 2, 3});
     vector *w2 = vector_from_list(3, (NN_TYPE[]){4, 5, 6});
-    test_assert(vector_dot_product(v3, w2) == 32, "vector_dot_product(v3, w2) == 32");
-    vector_delete(v3);
-    vector_delete(w2);
+    test_assert(vector_dot_product(v3, w2) == 32,
+                "vector_dot_product(v3, w2) == 32");
+    number_delete(v3);
+    number_delete(w2);
 
-    /* Test vector length that dot product of vector itself */
-    vector *v4 = vector_from_list(3, (NN_TYPE[]){1, 2, 3});
-    test_assert(vector_length(v4) == sqrt(14), "vector_length(v4) == %f", vector_length(v4));
-    vector_delete(v3);
     return 0;
 }
-

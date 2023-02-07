@@ -1,12 +1,10 @@
-#include "math/vector.h"
+#include "vector.h"
 
-#include "error.h"
-//#include <immintrin.h>
+#include "util/error.h"
+// #include <immintrin.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-
-int vector_delete(vector *vector);
 
 #define VECTOR_COMMON_SIZE      128
 #define COPY_ALIGMENT           32
@@ -24,78 +22,9 @@ int vector_delete(vector *vector);
         VECTOR(result, index) = VECTOR(v, index) expression value;             \
     }
 
-number *integer_create(unsigned int value)
-{
-    number *instance;
-
-    instance = malloc(sizeof(vector));
-    CHECK_MEMORY(instance);
-
-    instance->type    = NN_INTEGER;
-    instance->integer = value;
-
-    return instance;
-
-error:
-    return NULL;
-}
-
-number *float_create(float value)
-{
-    number *instance;
-
-    instance = malloc(sizeof(vector));
-    CHECK_MEMORY(instance);
-
-    instance->type    = NN_FLOAT;
-    instance->floated = value;
-
-    return instance;
-
-error:
-    return NULL;
-}
-
-number *double_create(double value)
-{
-    number *instance;
-
-    instance = malloc(sizeof(vector));
-    CHECK_MEMORY(instance);
-
-    instance->type    = NN_DOUBLE;
-    instance->doubled = value;
-
-    return instance;
-
-error:
-    return NULL;
-}
-
-int number_delete(void *number_ptr)
-{
-    int     r;
-    number *instance;
-    CHECK_MEMORY(number_ptr);
-
-    instance = (number *)number_ptr;
-    if (NN_FLOAT >= instance->type) {
-        free(instance);
-    } else if (NN_VECTOR == instance->type) {
-        r = vector_delete((vector *)instance);
-        CHECK(r == 0, "vector_delete() failed");
-    }
-    // TODO: matrix, tensor, ...
-
-    return 0;
-
-error:
-    return 1;
-}
-
 vector *vector_create(size_t length)
 {
-    vector   *instance;
+    vector  *instance;
     NN_TYPE *values;
 
     instance = malloc(sizeof(vector));
@@ -117,28 +46,11 @@ error:
     return NULL;
 }
 
-int vector_delete(vector *vector)
-{
-    int r;
-    CHECK_MEMORY(vector);
-
-    if (NN_VECTOR == vector->number.type) {
-        CHECK_MEMORY(vector->number.values);
-        free(vector->number.values);
-        free(vector);
-    }
-
-    return 0;
-
-error:
-    return 1;
-}
-
 vector *vector_from_list(size_t length, NN_TYPE values[])
 {
-    void     *r;
-    vector   *instance;
-    size_t    vector_length;
+    void    *r;
+    vector  *instance;
+    size_t   vector_length;
     NN_TYPE *vector_values;
 
     CHECK(length, "Vector length should be greater than zero (length=%ld)",
@@ -181,7 +93,7 @@ error:
 
 vector *vector_reshape(vector *instance, size_t length)
 {
-    void     *r;
+    void    *r;
     NN_TYPE *reshaped;
 
     VECTOR_CHECK(instance);
@@ -207,9 +119,9 @@ error:
     case size: {                                                               \
         v##size##sf *block = (v##size##sf *)v_block;                           \
                                                                                \
-        if (NN_DOUBLE >= w->type) {                                           \
+        if (NN_DOUBLE >= w->type) {                                            \
             *block = *block operation w->floated;                              \
-        } else if (NN_VECTOR == w->type) {                                    \
+        } else if (NN_VECTOR == w->type) {                                     \
             *block = *block operation * (v##size##sf *)w_block;                \
         }                                                                      \
         break;                                                                 \
@@ -223,7 +135,7 @@ error:
                                                                                \
         VECTOR_CHECK(v);                                                       \
         NUMBER_CHECK(w);                                                       \
-                                                                             \
+                                                                               \
         /* This code uses the __builtin_clz function, which counts the         \
          * number of leading zero bits in an integer, and bit shifting         \
          * to calculate the nearest power of 2 that is greater than or equal   \
@@ -234,10 +146,10 @@ error:
                                                                                \
         PRAGMA(omp for schedule(auto))                                         \
         for (size_t index = 0; index < (v)->length; index = index + power) {   \
-            void *block_ptr = (NN_TYPE *)(v->number.values) + index;          \
+            void *block_ptr = (NN_TYPE *)(v->number.values) + index;           \
                                                                                \
-            if (NN_VECTOR == w->type) {                                       \
-                values_added_ptr = (NN_TYPE *)(w->values) + index;            \
+            if (NN_VECTOR == w->type) {                                        \
+                values_added_ptr = (NN_TYPE *)(w->values) + index;             \
                 __builtin_prefetch(values_added_ptr + power, 0, 1);            \
             }                                                                  \
             __builtin_prefetch(block_ptr + power, 1, 1);                       \
@@ -314,7 +226,6 @@ error:
     return NULL;
 }
 
-
 float vector_dot_product(vector *v, vector *w)
 {
     VECTOR_CHECK(v);
@@ -322,7 +233,7 @@ float vector_dot_product(vector *v, vector *w)
 
     float product = 0.0f;
 
-    //#pragma omp parallel for simd reduction (+:product)
+    // #pragma omp parallel for simd reduction (+:product)
     VECTOR_FOREACH(v) { product += VECTOR(v, index) * VECTOR(w, index); }
 
     return product;
@@ -330,7 +241,6 @@ float vector_dot_product(vector *v, vector *w)
 error:
     return 0;
 }
-
 
 #define VECTOR_MAP_OPERATION(v_block, size, operation)                         \
     case size: {                                                               \
@@ -373,14 +283,15 @@ error:
     return NULL;
 }
 
-#define VECTOR_MAP_VALUE_OPERATION(v_block, size, operation, value)                         \
+#define VECTOR_MAP_VALUE_OPERATION(v_block, size, operation, value)            \
     case size: {                                                               \
         v##size##sf *block = (v##size##sf *)v_block;                           \
         for (size_t index = 0; index < size; index++)                          \
-            (*block)[index] = operation((*block)[index], value);                      \
+            (*block)[index] = operation((*block)[index], value);               \
         break;                                                                 \
     }
-vector *vector_map_value(vector *v, NN_TYPE operation(NN_TYPE, NN_TYPE*), NN_TYPE *value)
+vector *vector_map_value(vector *v, NN_TYPE operation(NN_TYPE, NN_TYPE *),
+                         NN_TYPE *value)
 {
     int   power;
     void *values_added_ptr;
@@ -414,11 +325,13 @@ error:
     return NULL;
 }
 
-int vector_index_of(vector *v, float needle) {
+int vector_index_of(vector *v, float needle)
+{
     VECTOR_CHECK(v);
 
-    VECTOR_FOREACH(v) {
-        if(VECTOR(v, index) == needle) {
+    VECTOR_FOREACH(v)
+    {
+        if (VECTOR(v, index) == needle) {
             return (int)index;
         }
     }
@@ -429,7 +342,8 @@ error:
     return -1;
 }
 
-NN_TYPE vector_length(vector *v) {
+NN_TYPE vector_length(vector *v)
+{
     VECTOR_CHECK(v);
 
     return sqrt(vector_dot_product(v, v));
@@ -438,15 +352,14 @@ error:
     return 0;
 }
 
-NN_TYPE vector_sum(vector *v) {
+NN_TYPE vector_sum(vector *v)
+{
     VECTOR_CHECK(v);
 
     NN_TYPE sum = 0;
 
-    //#pragma omp parallel for simd reduction (+:sum)
-    VECTOR_FOREACH(v) {
-        sum += VECTOR(v, index);
-    }
+    // #pragma omp parallel for simd reduction (+:sum)
+    VECTOR_FOREACH(v) { sum += VECTOR(v, index); }
 
     return sum;
 
@@ -454,14 +367,16 @@ error:
     return 0;
 }
 
-NN_TYPE vector_sum_to(vector *v, size_t to_index) {
+NN_TYPE vector_sum_to(vector *v, size_t to_index)
+{
     VECTOR_CHECK(v);
 
     NN_TYPE sum = 0;
 
-    VECTOR_FOREACH(v) {
+    VECTOR_FOREACH(v)
+    {
         sum += VECTOR(v, index);
-        if(index == to_index) {
+        if (index == to_index) {
             return sum;
         }
     }
@@ -472,12 +387,13 @@ error:
     return 0;
 }
 
-NN_TYPE vector_sum_between(vector *v, size_t from_index, size_t to_index) {
+NN_TYPE vector_sum_between(vector *v, size_t from_index, size_t to_index)
+{
     VECTOR_CHECK(v);
 
     NN_TYPE sum = 0;
 
-    for(size_t index = from_index; index < to_index; index++) {
+    for (size_t index = from_index; index < to_index; index++) {
         sum += VECTOR(v, index);
     }
 
@@ -487,7 +403,8 @@ error:
     return 0;
 }
 
-vector *vector_unit(vector *v) {
+vector *vector_unit(vector *v)
+{
     VECTOR_CHECK(v);
 
     /* FIXME: float_create -> NN_TYPE_create */
@@ -499,15 +416,15 @@ error:
     return NULL;
 }
 
-NN_TYPE vector_l_norm(vector *v, int power) {
+NN_TYPE vector_l_norm(vector *v, int power)
+{
     VECTOR_CHECK(v);
     CHECK(power, "P = 0 for L_norm");
 
     float l_norm = 0;
 
     size_t index = v->length;
-    while (index--)
-    {
+    while (index--) {
         l_norm += pow(fabs(VECTOR(v, index)), power);
     }
 
@@ -519,13 +436,14 @@ error:
     return 0;
 }
 
-NN_TYPE vector_max_norm(vector *v) {
+NN_TYPE vector_max_norm(vector *v)
+{
     VECTOR_CHECK(v);
 
     float max = 0;
 
     size_t index = v->length;
-    while(index--) {
+    while (index--) {
         float value = fabs(VECTOR(v, index));
         if (value > max) {
             max = value;
@@ -538,17 +456,18 @@ error:
     return 0;
 }
 
-size_t vector_max_index(vector *v) {
+size_t vector_max_index(vector *v)
+{
     VECTOR_CHECK(v);
 
-    float max = 0;
+    float  max       = 0;
     size_t max_index = 0;
 
     size_t index = v->length;
-    while(index--) {
+    while (index--) {
         float value = fabs(VECTOR(v, index));
         if (value > max) {
-            max = value;
+            max       = value;
             max_index = index;
         }
     }
@@ -559,11 +478,13 @@ error:
     return 0;
 }
 
-NN_TYPE vector_angle(vector *v, vector *w) {
+NN_TYPE vector_angle(vector *v, vector *w)
+{
     VECTOR_CHECK(v);
     VECTOR_CHECK(w);
 
-    float cosine = vector_dot_product(v, w) / (vector_length(v) * vector_length(w));
+    float cosine
+        = vector_dot_product(v, w) / (vector_length(v) * vector_length(w));
 
     float angle_in_degrees = acos(cosine) * 180 / M_PI;
 
@@ -595,5 +516,3 @@ void vector_print(vector *instance)
 error:
     return;
 }
-
-
