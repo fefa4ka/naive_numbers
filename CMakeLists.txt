@@ -15,15 +15,15 @@ target_include_directories(nn_number PUBLIC include)
 add_library(nn_vector STATIC src/vector.c)
 target_link_libraries(nn_vector nn_number)
 
+add_library(nn_matrix STATIC src/matrix.c)
+target_link_libraries(nn_matrix nn_vector)
+
 # https://github.com/SixTrack/SixTrack/blob/master/CMakeLists.txt
 # set(CMAKE_C_FLAGS "-mavx -mavx2 ${CMAKE_C_FLAGS}")
 
-add_executable(test_basic test/basic.c)
-target_link_libraries(test_basic nn_vector)
+add_executable(test_vector test/vector.c)
+target_link_libraries(test_vector nn_vector)
 
-add_executable(test_vector_addition test/vector_addition.c)
-target_link_libraries(test_vector_addition nn_vector)
-
-add_test(NAME test_basic
-    COMMAND test_basic)
+add_test(NAME test_vector
+    COMMAND test_vector)
 

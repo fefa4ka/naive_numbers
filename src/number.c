@@ -5,6 +5,22 @@
 
 int vector_delete(vector *vector);
 
+number *number_create(NN_TYPE value)
+{
+    number *instance;
+
+    instance = malloc(sizeof(vector));
+    CHECK_MEMORY(instance);
+
+    instance->type    = NN_TYPE_ENUM;
+    instance->floated = value;
+
+    return instance;
+
+error:
+    return NULL;
+}
+
 number *integer_create(unsigned int value)
 {
     number *instance;
@@ -65,8 +81,12 @@ int number_delete(void *number_ptr)
     } else if (NN_VECTOR == instance->type) {
         r = vector_delete((vector *)instance);
         CHECK(r == 0, "vector_delete() failed");
+    } else if (NN_MATRIX == instance->type) {
+        r = vector_delete((vector *)instance->values);
+        CHECK(r == 0, "vector_delete() failed");
+        free(instance);
     }
-    // TODO: matrix, tensor, ...
+    // TODO: tensor, ...
 
     return 0;
 

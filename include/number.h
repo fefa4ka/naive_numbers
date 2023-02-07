@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include "util/error.h"
 
 enum nn_type {
     NN_INTEGER,
@@ -20,6 +21,7 @@ enum nn_type {
 
 #ifndef NN_TYPE
     #define NN_TYPE float
+    #define NN_TYPE_ENUM NN_FLOAT
 #endif
 
 struct nn_number {
@@ -50,15 +52,26 @@ struct nn_tensor {
     size_t          *shape;
 };
 
-typedef struct nn_vector vector;
 typedef struct nn_number number;
+typedef struct nn_vector vector;
+typedef struct nn_matrix matrix;
 
 
+number *number_create(NN_TYPE value);
 number *integer_create(unsigned int value);
 number *float_create(float value);
 number *double_create(double value);
 int     number_delete(void *number);
 
+
+static inline NN_TYPE nn_random_range(NN_TYPE min, NN_TYPE max)
+{
+    NN_TYPE range = (max - min);
+    NN_TYPE div = RAND_MAX / range;
+    NN_TYPE random = min + (rand() / div);
+
+    return random > 1e-5 ? random : 1e-5;
+}
 
 /* Vector verifying */
 #define NUMBER_CHECK_LOG(instance, message, ...)                               \

@@ -7,11 +7,14 @@
 #define VECTOR_FOREACH(vector)                                                 \
     for (size_t index = 0; index < (vector)->length; index++)
 
+inline number *number_from_vector(vector *v, size_t index) {
+    return number_create(VECTOR(v, index));
+}
 
 vector *vector_create(size_t length);
+vector *vector_seed(vector *instance, float default_value);
 vector *vector_from_list(size_t length, NN_TYPE values[]);
 vector *vector_clone(vector *original);
-
 vector *vector_reshape(vector *instance, size_t length);
 
 vector *vector_addition(vector *v, number *w);
@@ -20,6 +23,9 @@ vector *vector_multiplication(vector *v, number *w);
 vector *vector_division(vector *v, number *w);
 
 NN_TYPE vector_dot_product(vector *v, vector *w);
+NN_TYPE vector_angle(vector *v, vector *w);
+int     vector_is_perpendicular(vector *v, vector *w);
+int     vector_is_equal(vector *v, vector *w);
 
 vector *vector_map(vector *v, NN_TYPE operation(NN_TYPE));
 vector *vector_map_value(vector *v, NN_TYPE operation(NN_TYPE, NN_TYPE *),
@@ -27,17 +33,15 @@ vector *vector_map_value(vector *v, NN_TYPE operation(NN_TYPE, NN_TYPE *),
 
 int     vector_index_of(vector *v, float needle);
 NN_TYPE vector_length(vector *v);
+vector *vector_unit(vector *v);
+
 NN_TYPE vector_sum(vector *v);
 NN_TYPE vector_sum_to(vector *v, size_t to_index);
 NN_TYPE vector_sum_between(vector *v, size_t from_index, size_t to_index);
 
-vector *vector_unit(vector *v);
 NN_TYPE vector_l_norm(vector *v, int power);
 NN_TYPE vector_max_norm(vector *v);
 size_t  vector_max_index(vector *v);
-NN_TYPE vector_angle(vector *v, vector *w);
-int     vector_is_perpendicular(vector *v, vector *w);
-int     vector_is_equal(vector *v, vector *w);
 
 void vector_print(vector *instance);
 

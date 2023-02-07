@@ -1,7 +1,6 @@
 #include "vector.h"
 
 #include "util/error.h"
-// #include <immintrin.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
@@ -21,6 +20,7 @@
     {                                                                          \
         VECTOR(result, index) = VECTOR(v, index) expression value;             \
     }
+
 
 vector *vector_create(size_t length)
 {
@@ -43,6 +43,26 @@ error:
     if (instance)
         free(instance);
 
+    return NULL;
+}
+
+vector *vector_seed(vector *instance, NN_TYPE default_value)
+{
+    VECTOR_CHECK(instance);
+
+    // #pragma omp parallel for
+    VECTOR_FOREACH(instance)
+    {
+        if (default_value) {
+            VECTOR(instance, index) = default_value;
+        } else {
+            VECTOR(instance, index) = nn_random_range(-1, 1);
+        }
+    }
+
+    return instance;
+
+error:
     return NULL;
 }
 
@@ -407,8 +427,7 @@ vector *vector_unit(vector *v)
 {
     VECTOR_CHECK(v);
 
-    /* FIXME: float_create -> NN_TYPE_create */
-    number *length = float_create(vector_length(v));
+    number *length = number_create(vector_length(v));
 
     return vector_division(v, length);
 
@@ -493,6 +512,35 @@ NN_TYPE vector_angle(vector *v, vector *w)
 error:
     return 0;
 }
+
+int vector_is_perpendicular(vector *v, vector *w)
+{
+    VECTOR_CHECK(v);
+    VECTOR_CHECK(w);
+
+    float dot_product = vector_dot_product(v, w);
+
+    return dot_product == 0 ? 1 : 0;
+
+error:
+    return -1;
+}
+
+int vector_is_equal(vector *v, vector *w)
+{
+    VECTOR_CHECK(v);
+    VECTOR_CHECK(w);
+
+    int is_equal
+        = v->length == w->length
+          && memcmp(v->number.values, w->number.values, v->length) == 0;
+
+    return is_equal;
+
+error:
+    return -1;
+}
+
 
 void vector_print(vector *instance)
 {
