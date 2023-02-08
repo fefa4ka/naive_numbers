@@ -18,9 +18,6 @@ target_link_libraries(nn_vector nn_number)
 add_library(nn_matrix STATIC src/matrix.c)
 target_link_libraries(nn_matrix nn_vector)
 
-# https://github.com/SixTrack/SixTrack/blob/master/CMakeLists.txt
-# set(CMAKE_C_FLAGS "-mavx -mavx2 ${CMAKE_C_FLAGS}")
-
 add_executable(test_vector test/vector.c)
 target_link_libraries(test_vector nn_vector)
 
