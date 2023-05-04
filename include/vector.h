@@ -14,8 +14,10 @@ inline number *number_from_vector(vector *v, size_t index) {
 vector *vector_create(size_t length);
 vector *vector_seed(vector *instance, float default_value);
 vector *vector_from_list(size_t length, NN_TYPE values[]);
+vector *vector_uniq(vector *instance); 
 vector *vector_clone(vector *original);
 vector *vector_reshape(vector *instance, size_t length);
+vector *vector_shuffle(vector *instance);
 
 vector *vector_addition(vector *v, number *w);
 vector *vector_substraction(vector *v, number *w);

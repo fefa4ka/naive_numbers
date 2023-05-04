@@ -9,11 +9,14 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
-add_library(nn_number STATIC src/number.c)
+add_library(nn_number STATIC src/number.c src/utils.c)
 target_include_directories(nn_number PUBLIC include)
 
 add_library(nn_vector STATIC src/vector.c)
 target_link_libraries(nn_vector nn_number)
+
+add_library(nn_text STATIC src/text.c)
+target_link_libraries(nn_text nn_number)
 
 add_library(nn_matrix STATIC src/matrix.c)
 target_link_libraries(nn_matrix nn_vector)

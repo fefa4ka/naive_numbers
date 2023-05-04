@@ -1,3 +1,4 @@
+#include "vector.h"
 #include <math.h>
 #include <nn.h> // include header for Linked Ring library
 #include <stdbool.h>
@@ -124,7 +125,6 @@ int test_vector_unit()
 
     number_delete(v1);
     number_delete(v1_unit);
-
 
     return 0;
 }
@@ -299,6 +299,37 @@ int test_vector_dot_product() {
     return 0;
 }
 
+int test_vector_shuffle() {
+    vector *v = vector_from_list(5, (NN_TYPE[]){1, 2, 3, 4, 5});
+    NN_TYPE v_length = vector_length(v);
+    vector_shuffle(v);
+
+    test_assert(vector_length(v) == v_length, "Vector length is correct after shuffle");
+    test_assert(vector_index_of(v, 1) != -1, "Vector contains 1 after shuffle");
+    test_assert(vector_index_of(v, 2) != -1, "Vector contains 2 after shuffle");
+    test_assert(vector_index_of(v, 3) != -1, "Vector contains 3 after shuffle");
+    test_assert(vector_index_of(v, 4) != -1, "Vector contains 4 after shuffle");
+    test_assert(vector_index_of(v, 5) != -1, "Vector contains 5 after shuffle");
+    number_delete(v);
+
+    return 0;
+}
+
+int test_vector_uniq() {
+    vector *v = vector_from_list(5, (NN_TYPE[]){1, 2, 3, 2, 1});
+    vector *v_uniq = vector_uniq(v);
+
+    test_assert(v_uniq->length == 3, "Vector length is correct after uniq");
+    test_assert(vector_index_of(v, 1) == 0, "Vector contains 1 after uniq");
+    test_assert(vector_index_of(v, 2) == 1, "Vector contains 2 after uniq");
+    test_assert(vector_index_of(v, 3) == 2, "Vector contains 3 after uniq");
+    
+    number_delete(v);
+    number_delete(v_uniq);
+
+    return 0;
+}
+
 int main()
 {
     test_vector_create();
@@ -317,6 +348,9 @@ int main()
     test_vector_index_of();
     test_vector_map();
     test_vector_dot_product();
+
+    test_vector_shuffle();
+    test_vector_uniq();
 
     return 0;
 }

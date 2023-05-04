@@ -16,12 +16,17 @@ enum nn_type {
     NN_HYPERCOMPLEX,
     NN_QUANTERNION,
     NN_BIG,
+    NN_TEXT,
     NN_UNDEFINED
 };
 
 #ifndef NN_TYPE
     #define NN_TYPE float
     #define NN_TYPE_ENUM NN_FLOAT
+#endif
+
+#ifndef NN_CHAR_TYPE
+    #define NN_CHAR_TYPE char 
 #endif
 
 struct nn_number {
@@ -40,6 +45,11 @@ struct nn_vector {
     size_t           length;
 };
 
+struct nn_text {
+    struct nn_number number;
+    size_t length;
+};
+
 struct nn_matrix {
     struct nn_number number;
     size_t           rows;
@@ -54,6 +64,7 @@ struct nn_tensor {
 
 typedef struct nn_number number;
 typedef struct nn_vector vector;
+typedef struct nn_text text;
 typedef struct nn_matrix matrix;
 
 

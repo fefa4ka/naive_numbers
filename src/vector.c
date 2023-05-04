@@ -1,5 +1,7 @@
 #include "vector.h"
 
+#include "number.h"
+#include "utils.h"
 #include "util/error.h"
 #include <math.h>
 #include <stdio.h>
@@ -22,6 +24,16 @@
     }
 
 
+/**
+ * Creates a new vector instance with the specified length.
+ *
+ * @param length The length of the vector to create.
+ * @return A pointer to the newly created vector instance, or NULL if an error occurred.
+ *
+ * @throws MemoryError if there is not enough memory to allocate the vector or its values.
+ *
+ * @note The caller is responsible for freeing the memory allocated by this function.
+ */
 vector *vector_create(size_t length)
 {
     vector  *instance;
@@ -46,11 +58,23 @@ error:
     return NULL;
 }
 
+/**
+ * Initializes a vector with either a default value or random values within a range.
+ *
+ * @param instance A pointer to the vector to be initialized.
+ * @param default_value The default value to initialize the vector with. If 0, random values will be used instead.
+ * @return A pointer to the initialized vector. If an error occurs, NULL is returned.
+ *
+ * @throws VECTOR_ERROR_NULL_INSTANCE if instance is NULL.
+ *
+ * @note This function can be parallelized using OpenMP by uncommenting the #pragma directive.
+ */
 vector *vector_seed(vector *instance, NN_TYPE default_value)
 {
+    // Check for NULL instance
     VECTOR_CHECK(instance);
 
-    // #pragma omp parallel for
+    // Seed the vector with either default values or random values
     VECTOR_FOREACH(instance)
     {
         if (default_value) {
@@ -60,12 +84,30 @@ vector *vector_seed(vector *instance, NN_TYPE default_value)
         }
     }
 
+    // Return the initialized vector
     return instance;
 
+    // Handle errors by returning NULL
 error:
     return NULL;
 }
 
+/**
+ * Creates a new vector instance from an array of NN_TYPE values.
+ *
+ * @param length The length of the array of values.
+ * @param values The array of NN_TYPE values to be used to create the vector.
+ *
+ * @return A pointer to the newly created vector instance.
+ * @retval NULL if an error occurred during creation.
+ *
+ * @note The caller is responsible for freeing the memory allocated for the vector instance.
+ * @note The caller is responsible for freeing the memory allocated for the vector values.
+ *
+ * @warning The length parameter must be greater than zero.
+ * @warning The values parameter must not be NULL.
+ * @warning The function will return NULL if an error occurs during creation.
+ */
 vector *vector_from_list(size_t length, NN_TYPE values[])
 {
     void    *r;
@@ -111,6 +153,20 @@ error:
     return NULL;
 }
 
+/**
+ * Reshapes a vector instance to a new length.
+ *
+ * @param instance A pointer to the vector instance to be reshaped.
+ * @param length The new length of the vector.
+ *
+ * @return A pointer to the reshaped vector instance.
+ * @retval NULL If an error occurred during the reshaping process.
+ *
+ * @throws VECTOR_ERROR_NULL_INSTANCE If the instance pointer is NULL.
+ * @throws VECTOR_ERROR_MEMORY If there was an error allocating memory for the reshaped vector.
+ *
+ * @note If the new length is greater than the current length, the additional elements will be initialized to 0.
+ */
 vector *vector_reshape(vector *instance, size_t length)
 {
     void    *r;
@@ -118,10 +174,12 @@ vector *vector_reshape(vector *instance, size_t length)
 
     VECTOR_CHECK(instance);
 
+    // Reallocate memory for the reshaped vector
     reshaped = realloc(instance->number.values, length * sizeof(NN_TYPE));
     CHECK_MEMORY(reshaped);
     instance->number.values = reshaped;
 
+    // Initialize additional elements to 0 if new length is greater than current length
     if (length > instance->length) {
         memset((NN_TYPE *)instance->number.values + instance->length, 0,
                (length - instance->length) * sizeof(NN_TYPE));
@@ -135,6 +193,48 @@ error:
     return NULL;
 }
 
+/**
+ * Shuffles the elements of a vector instance.
+ *
+ * @param v A pointer to the vector instance to be shuffled.
+ *
+ * @return A pointer to the shuffled vector instance.
+ */
+vector *vector_shuffle(vector *v) {
+    size_t size = v->length;
+    for(size_t index = 0; index < size; index++) {
+        NN_TYPE shuffled_value;
+        size_t shuffled;
+        
+        shuffled = (size_t)nn_random_range(0, size);
+        if(shuffled == index) {
+            if(index == size - 1) {
+                if(index != 0) {
+                    shuffled = index - 1;
+                }
+            } else {
+                shuffled = index + 1;
+            }
+        }
+        
+        shuffled_value = VECTOR(v, index);
+        VECTOR(v, index) = VECTOR(v, shuffled);
+        VECTOR(v, shuffled) = shuffled_value;
+    }
+    
+    return v;
+}
+
+
+/**
+ * Performs a vector operation on two vectors of the same size.
+ *
+ * @param v_block A pointer to the first vector.
+ * @param w_block A pointer to the second vector or number.
+ * @param size The size of the vectors.
+ * @param operation The operation to perform on the vectors.
+ *
+ */
 #define VECTOR_TYPE_OPERATION(v_block, w_block, size, operation)               \
     case size: {                                                               \
         v##size##sf *block = (v##size##sf *)v_block;                           \
@@ -246,6 +346,18 @@ error:
     return NULL;
 }
 
+/**
+ * Calculates the dot product of two vectors.
+ *
+ * @param v A pointer to the first vector.
+ * @param w A pointer to the second vector.
+ * @return The dot product of the two vectors.
+ * @throws If either v or w is NULL, an error is thrown and 0 is returned.
+ *
+ * This function calculates the dot product of two vectors. The dot product is defined as the sum of the products of the corresponding entries of the two vectors. For example, if v = [1, 2, 3] and w = [4, 5, 6], then the dot product of v and w is 1*4 + 2*5 + 3*6 = 32.
+ *
+ * Note that this function assumes that the two vectors have the same length. If they do not, the behavior of the function is undefined.
+ */
 float vector_dot_product(vector *v, vector *w)
 {
     VECTOR_CHECK(v);
@@ -262,6 +374,15 @@ error:
     return 0;
 }
 
+/**
+ * Macro that defines a vector map operation for a given block size.
+ *
+ * @param v_block A pointer to the block of memory to perform the operation on.
+ * @param size The size of the block of memory.
+ * @param operation The operation to perform on each element of the block of memory.
+ *
+ * This macro defines a vector map operation for a given block size. The operation is performed on each element of the block of memory. The block of memory is assumed to be a vector of type v##size##sf, where v is the vector type and size is the block size.
+ */
 #define VECTOR_MAP_OPERATION(v_block, size, operation)                         \
     case size: {                                                               \
         v##size##sf *block = (v##size##sf *)v_block;                           \
@@ -269,6 +390,7 @@ error:
             (*block)[index] = operation((*block)[index]);                      \
         break;                                                                 \
     }
+
 vector *vector_map(vector *v, NN_TYPE operation(NN_TYPE))
 {
     int   power;
@@ -422,19 +544,66 @@ NN_TYPE vector_sum_between(vector *v, size_t from_index, size_t to_index)
 error:
     return 0;
 }
+vector *vector_uniq(vector *instance) {
+    size_t size;
+    NN_TYPE *uniq;
 
-vector *vector_unit(vector *v)
-{
-    VECTOR_CHECK(v);
+    VECTOR_CHECK(instance);
+    
+    size = 0;
+    uniq = nn_uniq_numbers(instance->number.values, instance->length, &size);
+    CHECK_MEMORY(uniq);
 
-    number *length = number_create(vector_length(v));
-
-    return vector_division(v, length);
-
+    return vector_from_list(size, uniq);
 error:
     return NULL;
 }
 
+/**
+ * Returns a new vector that is the unit vector of the input vector.
+ *
+ * @param v A pointer to the vector to be normalized.
+ *
+ * @return A pointer to a new vector that is the unit vector of the input vector.
+ *
+ * @throws NULL if the input vector is NULL.
+ * @throws NULL if there is an error during the normalization process.
+ *
+ * This function takes a pointer to a vector and returns a new vector that is the unit vector of the input vector. The input vector is not modified.
+ * The unit vector is a vector with the same direction as the input vector, but with a length of 1.
+ *
+ */
+vector *vector_unit(vector *v)
+{
+    vector *unit_vector;
+    VECTOR_CHECK(v);
+
+    number *length = number_create(vector_length(v));
+    NUMBER_CHECK(length);
+
+    unit_vector = vector_division(vector_clone(v), length);
+    number_delete(length);
+
+    return unit_vector;
+
+error:
+    if(length) {
+        number_delete(length);
+    }
+    return NULL;
+}
+
+/**
+ * Calculates the L-norm of a given vector raised to a specified power.
+ *
+ * @param v A pointer to the vector to calculate the L-norm of.
+ * @param power An integer specifying the power to raise the L-norm to.
+ *
+ * @return The L-norm of the vector raised to the specified power.
+ *
+ * @throws A null pointer exception if the vector pointer is null.
+ * @throws An invalid argument exception if the power is 0.
+ */
 NN_TYPE vector_l_norm(vector *v, int power)
 {
     VECTOR_CHECK(v);
@@ -497,6 +666,19 @@ error:
     return 0;
 }
 
+/**
+ * Calculates the angle between two vectors in degrees.
+ *
+ * @param v A pointer to the first vector.
+ * @param w A pointer to the second vector.
+ *
+ * @return The angle between the two vectors in degrees.
+ * @throws If either v or w is NULL, an error is thrown.
+ *
+ * @note This function assumes that the vectors are non-zero and non-null.
+ * @note The angle is calculated using the dot product and the lengths of the vectors.
+ * @note The angle is returned in degrees.
+ */
 NN_TYPE vector_angle(vector *v, vector *w)
 {
     VECTOR_CHECK(v);
@@ -510,9 +692,22 @@ NN_TYPE vector_angle(vector *v, vector *w)
     return angle_in_degrees;
 
 error:
-    return 0;
+    return -1;
 }
 
+/**
+ * Determines if two vectors are perpendicular.
+ *
+ * @param v A pointer to the first vector.
+ * @param w A pointer to the second vector.
+ *
+ * @return 1 if the vectors are perpendicular, 0 otherwise.
+ *
+ * @throws If either v or w is NULL, an error is thrown.
+ *
+ * @note This function assumes that the vectors are non-null.
+ * @note Two vectors are perpendicular if their dot product is 0.
+ */
 int vector_is_perpendicular(vector *v, vector *w)
 {
     VECTOR_CHECK(v);
@@ -525,6 +720,7 @@ int vector_is_perpendicular(vector *v, vector *w)
 error:
     return -1;
 }
+
 
 int vector_is_equal(vector *v, vector *w)
 {

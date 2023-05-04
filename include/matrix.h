@@ -24,6 +24,7 @@ matrix *matrix_diagonal_from_vector(vector *v);
 matrix *matrix_clone(matrix *original);
 matrix *matrix_reshape(matrix *instance, size_t rows, size_t columns);
 
+matrix *matrix_diagonal(matrix *A, size_t row, size_t column);
 vector *matrix_column_vector(matrix *A, size_t column);
 matrix *matrix_transpose(matrix *instance);
 vector *vector_transformation_by_matrix(matrix *A, vector *x);

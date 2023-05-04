@@ -162,6 +162,8 @@ Macros for loop for iterating over the elements of the vector and matrix:
 | `vector_seed` | `vector *v` | initializes all elements of the vector with the given default value or random in case of 0 default value. |
 | `vector_reshape` | `vector *instance, size_t length` | returns a new `vector` object with the given length, reshaped from the given vector `instance`. |
 | `vector_dot_product` | `vector *v, vector *w` | calculates the dot product of two vectors `v` and `w`. The dot product is a scalar value calculated by multiplying corresponding elements of the vectors and summing the results. The function returns the calculated dot product as a `NN_TYPE` value. |
+| `vector_shuffle` | `vector *v` | shuffles the elements of the given vector `v` randomly. |
+| `vector_uniq` | `vector *v` | returns a new `vector` object that contains only the unique elements of the given vector `v`. |
 
 This functions updates the elements of vector `v` by applying some operation to each element, and then returns a reference to the updated vector:
 | Function | Arguments | Description |
@@ -176,6 +178,7 @@ This functions updates the elements of vector `v` by adding/substracting/multipl
 | `vector_substraction` | `vector *v, number *w` |
 | `vector_multiplication` | `vector *v, number *w` |
 | `vector_division` | `vector *v, number *w` |
+
 
 ### Matrix operations
 | Function | Arguments | Description |

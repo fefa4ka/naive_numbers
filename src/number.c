@@ -3,8 +3,21 @@
 #include "util/error.h"
 #include <stdio.h>
 
-int vector_delete(vector *vector);
+int vector_delete(vector *instance);
+int text_delete(text *instance);
 
+/**
+ * Creates a new number instance with the given value of defaule NN_TYPE.
+ *
+ * @param value The value to assign to the new number instance.
+ * @return A pointer to the newly created number instance.
+ *
+ * @throws NULL if there is not enough memory to allocate the new instance.
+ *
+ * This function creates a new number instance with the given value. The new instance is allocated on the heap using malloc().
+ * If there is not enough memory to allocate the new instance, NULL is thrown.
+ *
+ */
 number *number_create(NN_TYPE value)
 {
     number *instance;
@@ -85,6 +98,9 @@ int number_delete(void *number_ptr)
         r = vector_delete((vector *)instance->values);
         CHECK(r == 0, "vector_delete() failed");
         free(instance);
+    } else if (NN_TEXT == instance->type) {
+        r = text_delete((text *)instance);
+        CHECK(r == 0, "vector_delete() failed");
     }
     // TODO: tensor, ...
 
@@ -110,3 +126,21 @@ int vector_delete(vector *vector)
 error:
     return 1;
 }
+
+int text_delete(text *instance)
+{
+    int r;
+    CHECK_MEMORY(instance);
+
+    if (NN_TEXT == instance->number.type) {
+        CHECK_MEMORY(instance->number.values);
+        free(instance->number.values);
+        free(instance);
+    }
+
+    return 0;
+
+error:
+    return 1;
+}
+
