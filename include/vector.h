@@ -7,9 +7,7 @@
 #define VECTOR_FOREACH(vector)                                                 \
     for (size_t index = 0; index < (vector)->length; index++)
 
-inline number *number_from_vector(vector *v, size_t index) {
-    return number_create(VECTOR(v, index));
-}
+#define number_from_vector(v, index) number_create(VECTOR(v, index))
 
 vector *vector_create(size_t length);
 vector *vector_seed(vector *instance, float default_value);

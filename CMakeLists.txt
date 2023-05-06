@@ -21,9 +21,24 @@ target_link_libraries(nn_text nn_number)
 add_library(nn_matrix STATIC src/matrix.c)
 target_link_libraries(nn_matrix nn_vector)
 
+add_library(nn_probability STATIC src/probability.c)
+target_link_libraries(nn_probability nn_matrix nn_vector)
+
+enable_testing()
+
 add_executable(test_vector test/vector.c)
 target_link_libraries(test_vector nn_vector)
 
-add_test(NAME test_vector
+add_executable(test_matrix test/matrix.c)
+target_link_libraries(test_matrix nn_matrix)
+
+add_executable(test_probability test/probability.c)
+target_link_libraries(test_probability nn_probability)
+
+add_test(NAME vector
     COMMAND test_vector)
+add_test(NAME matrix
+    COMMAND test_matrix)
+add_test(NAME probability
+    COMMAND test_probability)
 

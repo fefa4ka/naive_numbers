@@ -546,15 +546,20 @@ error:
 }
 vector *vector_uniq(vector *instance) {
     size_t size;
-    NN_TYPE *uniq;
+    NN_TYPE *uniq_values;
+    vector *uniq_vector;
 
     VECTOR_CHECK(instance);
     
     size = 0;
-    uniq = nn_uniq_numbers(instance->number.values, instance->length, &size);
-    CHECK_MEMORY(uniq);
+    uniq_values = nn_uniq_numbers(instance->number.values, instance->length, &size);
+    CHECK_MEMORY(uniq_values);
 
-    return vector_from_list(size, uniq);
+    uniq_vector = vector_from_list(size, uniq_values);
+    free(uniq_values);
+
+    return uniq_vector;
+    
 error:
     return NULL;
 }
@@ -727,11 +732,14 @@ int vector_is_equal(vector *v, vector *w)
     VECTOR_CHECK(v);
     VECTOR_CHECK(w);
 
-    int is_equal
-        = v->length == w->length
-          && memcmp(v->number.values, w->number.values, v->length) == 0;
+    if(v->length != w->length)
+        return 0;
+    
+    if(memcmp(v->number.values, w->number.values, v->length * sizeof(NN_TYPE)) == 0) {
+        return 1;
+    }
 
-    return is_equal;
+    return 0;
 
 error:
     return -1;

@@ -1,10 +1,11 @@
 #include "number.h"
 
 #include "util/error.h"
+#include "vector.h"
 #include <stdio.h>
 
-int vector_delete(vector *instance);
-int text_delete(text *instance);
+int object_delete(number *instance);
+int matrix_delete(number *instance);
 
 /**
  * Creates a new number instance with the given value of defaule NN_TYPE.
@@ -92,14 +93,10 @@ int number_delete(void *number_ptr)
     if (NN_FLOAT >= instance->type) {
         free(instance);
     } else if (NN_VECTOR == instance->type) {
-        r = vector_delete((vector *)instance);
+        r = object_delete(instance);
         CHECK(r == 0, "vector_delete() failed");
     } else if (NN_MATRIX == instance->type) {
-        r = vector_delete((vector *)instance->values);
-        CHECK(r == 0, "vector_delete() failed");
-        free(instance);
-    } else if (NN_TEXT == instance->type) {
-        r = text_delete((text *)instance);
+        r = matrix_delete(instance);
         CHECK(r == 0, "vector_delete() failed");
     }
     // TODO: tensor, ...
@@ -110,37 +107,36 @@ error:
     return 1;
 }
 
-int vector_delete(vector *vector)
+int object_delete(number *instance)
 {
     int r;
-    CHECK_MEMORY(vector);
-
-    if (NN_VECTOR == vector->number.type) {
-        CHECK_MEMORY(vector->number.values);
-        free(vector->number.values);
-        free(vector);
-    }
-
-    return 0;
-
-error:
-    return 1;
-}
-
-int text_delete(text *instance)
-{
-    int r;
+    
     CHECK_MEMORY(instance);
+    CHECK_MEMORY(instance->values);
 
-    if (NN_TEXT == instance->number.type) {
-        CHECK_MEMORY(instance->number.values);
-        free(instance->number.values);
-        free(instance);
-    }
+    free(instance->values);
+    free(instance);
 
     return 0;
 
 error:
     return 1;
 }
+
+int matrix_delete(number *instance)
+{
+    int r;
+    
+    CHECK_MEMORY(instance);
+    CHECK_MEMORY(instance->values);
+
+    object_delete(instance->values);
+    free(instance);
+
+    return 0;
+
+error:
+    return 1;
+}
+
 

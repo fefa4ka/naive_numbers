@@ -1,6 +1,6 @@
 #include "vector.h"
 #include <math.h>
-#include <nn.h> // include header for Linked Ring library
+#include <nn.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -285,6 +285,8 @@ int test_vector_map() {
     //    test_assert(VECTOR(v2_mapped,0) == 1., "v2_mapped[0] == %f",
     //    VECTOR(v2_mapped, 0));
 
+    number_delete(v2);
+
     return 0;
 }
 
@@ -354,3 +356,4 @@ int main()
 
     return 0;
 }
+

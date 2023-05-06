@@ -373,21 +373,25 @@ error:
     return 0;
 }
 
-float matrix_frobenius_norm_by_trace(matrix *A)
+float matrix_frobenius_norm_by_trace(matrix *instance)
 {
     float   frobenius;
+    matrix *A;
     matrix *AT;
     matrix *A_AT;
-    MATRIX_CHECK(A);
+    MATRIX_CHECK(instance);
 
-    AT = matrix_clone(A);
+    A = matrix_clone(instance);
+    MATRIX_CHECK(A);
+    AT = matrix_clone(instance);
     MATRIX_CHECK(AT);
     matrix_transpose(AT);
 
-    A_AT = matrix_multiplication(matrix_clone(A), AT);
+    A_AT = matrix_multiplication(A, AT);
 
     frobenius = sqrt(matrix_trace(A_AT));
 
+    number_delete(A);
     number_delete(AT);
     number_delete(A_AT);
 

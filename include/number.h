@@ -62,10 +62,29 @@ struct nn_tensor {
     size_t          *shape;
 };
 
+
 typedef struct nn_number number;
 typedef struct nn_vector vector;
 typedef struct nn_text text;
 typedef struct nn_matrix matrix;
+typedef struct nn_tensor tensor;
+
+
+struct nn_probability 
+{
+    char **fields;
+    matrix *samples;
+
+    vector **events;
+    vector **occurs;
+    vector **P;
+
+    float *variance;
+    matrix *covariance;
+    matrix *correlation;
+};
+typedef struct nn_probability probability;
+
 
 
 number *number_create(NN_TYPE value);
