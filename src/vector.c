@@ -421,14 +421,6 @@ vector *vector_map(vector *v, NN_TYPE operation(NN_TYPE))
     void *values_added_ptr;
 
     VECTOR_CHECK(v);
-    
-    // Make sure we're working with a vector that has a ref_count of 1
-    // If ref_count > 1, we need to clone it to avoid modifying shared data
-    if (v->number.ref_count > 1) {
-        vector *clone = vector_clone(v);
-        number_unref((number*)v);
-        v = clone;
-    }
 
     power = v->length >= 128
                 ? 128
@@ -471,14 +463,6 @@ vector *vector_map_value(vector *v, NN_TYPE operation(NN_TYPE, NN_TYPE *),
     void *values_added_ptr;
 
     VECTOR_CHECK(v);
-    
-    // Make sure we're working with a vector that has a ref_count of 1
-    // If ref_count > 1, we need to clone it to avoid modifying shared data
-    if (v->number.ref_count > 1) {
-        vector *clone = vector_clone(v);
-        number_unref((number*)v);
-        v = clone;
-    }
 
     power = v->length >= 128
                 ? 128
