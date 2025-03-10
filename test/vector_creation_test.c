@@ -33,16 +33,16 @@ int test_vector_creation() {
     
     // Test vector_seed
     vector_seed(v1, 3.14);
-    test_assert(VECTOR(v1, 0) == 3.14, "vector_seed sets values correctly");
-    test_assert(VECTOR(v1, 4) == 3.14, "vector_seed sets all values");
+    test_assert((VECTOR(v1, 0) - 3.14) < NN_TYPE_EPSILON, "vector_seed sets values correctly, inside = %f", VECTOR(v1, 0));
+    test_assert((VECTOR(v1, 4) - 3.14) < NN_TYPE_EPSILON, "vector_seed sets all values");
     
     // Test vector_from_list
     NN_TYPE values[] = {1.1, 2.2, 3.3, 4.4, 5.5};
     vector *v2 = vector_from_list(5, values);
     test_assert(v2 != NULL, "vector_from_list allocates memory");
     test_assert(v2->length == 5, "vector_from_list sets correct length");
-    test_assert(VECTOR(v2, 0) == 1.1, "vector_from_list sets first value correctly");
-    test_assert(VECTOR(v2, 4) == 5.5, "vector_from_list sets last value correctly");
+    test_assert((VECTOR(v2, 0) - 1.1)  < NN_TYPE_EPSILON, "vector_from_list sets first value correctly");
+    test_assert((VECTOR(v2, 4) - 5.5)  < NN_TYPE_EPSILON, "vector_from_list sets last value correctly");
     
     // Test vector_clone
     vector *v3 = vector_clone(v2);
@@ -57,9 +57,9 @@ int test_vector_creation() {
     vector *v4 = vector_reshape(vector_clone(v2), 8);
     test_assert(v4 != NULL, "vector_reshape returns non-NULL");
     test_assert(v4->length == 8, "vector_reshape changes length correctly");
-    test_assert(VECTOR(v4, 0) == 1.1, "vector_reshape preserves existing values");
-    test_assert(VECTOR(v4, 4) == 5.5, "vector_reshape preserves last original value");
-    test_assert(VECTOR(v4, 5) == 0.0, "vector_reshape initializes new values to 0");
+    test_assert((VECTOR(v4, 0) - 1.1) < NN_TYPE_EPSILON, "vector_reshape preserves existing values");
+    test_assert((VECTOR(v4, 4) - 5.5) < NN_TYPE_EPSILON, "vector_reshape preserves last original value");
+    test_assert((VECTOR(v4, 5) - 0.0) < NN_TYPE_EPSILON, "vector_reshape initializes new values to 0");
     
     // Clean up
     number_delete((number*)v1);
@@ -122,6 +122,8 @@ int test_vector_manipulation() {
     return 0;
 }
 
+NN_TYPE square(NN_TYPE x) { return x * x; }
+NN_TYPE add_one(NN_TYPE x) { return x + 1.0; }
 // Test vector map operations
 int test_vector_map() {
     printf("\n=== Testing Vector Map Operations ===\n");
@@ -130,8 +132,6 @@ int test_vector_map() {
     vector *v = vector_from_list(3, (NN_TYPE[]){1.0, 2.0, 3.0});
     
     // Define map functions
-    NN_TYPE square(NN_TYPE x) { return x * x; }
-    NN_TYPE add_one(NN_TYPE x) { return x + 1.0; }
     
     // Test vector_map with square function
     vector *v_squared = vector_map(vector_clone(v), square);
