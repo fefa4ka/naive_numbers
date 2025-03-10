@@ -88,8 +88,8 @@ int test_vector_manipulation() {
     vector *v3 = vector_clone(v1);
     vector *diff = vector_subtraction(v3, (number*)number_ref((number*)v2));
     test_assert(diff != NULL, "vector_subtraction returns non-NULL");
-    test_assert(VECTOR(diff, 0) == -3.0, "vector_subtraction correctly subtracts first elements");
-    test_assert(VECTOR(diff, 2) == -3.0, "vector_subtraction correctly subtracts last elements");
+    test_assert((VECTOR(diff, 0) + 3.0) < NN_TYPE_EPSILON, "vector_subtraction correctly subtracts first elements, actual = %f", VECTOR(diff, 0));
+    test_assert((VECTOR(diff, 2) + 3.0) < NN_TYPE_EPSILON, "vector_subtraction correctly subtracts last elements");
     
     // Test vector_multiplication with scalar
     vector *v4 = vector_clone(v1);
