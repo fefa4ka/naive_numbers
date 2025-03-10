@@ -214,7 +214,7 @@ int test_vector_addition() {
 
     pi = float_create(3.14f);
     vector_3d = vector_from_list(3, vec_3d_data);
-    vector_tmp = vector_addition(vector_3d, pi);
+    vector_tmp = vector_addition(vector_3d, number_ref(pi));  // Ref pi since vector_addition will unref it
 
     test_assert(VECTOR(vector_3d, 0) == (float)(vec_3d_data[0] + pi->floated),
                 "Vector added %f + %f == %f", VECTOR(vector_3d, 0), pi->floated,
@@ -230,8 +230,8 @@ int test_vector_addition() {
     one     = float_create(2.0);
     big     = vector_create(122880);
     big_yet = vector_create(122880);
-    vector_addition(big, one);
-    vector_addition(big_yet, one);
+    vector_addition(big, number_ref(one));  // Ref one since vector_addition will unref it
+    vector_addition(big_yet, number_ref(one));  // Ref one since vector_addition will unref it
 
     number_delete(one);
     number_delete(big);
@@ -250,21 +250,22 @@ int test_vector_addition_advanced() {
     vector *y = vector_from_list(3, (NN_TYPE[]){10, 11, 12});
     vector *z = vector_from_list(3, (NN_TYPE[]){13, 14, 15});
 
-    vector *vw    = vector_addition(v, (number *)w);
-    vector *vwx   = vector_addition(vw, (number *)x);
-    vector *vwxy  = vector_addition(vwx, (number *)y);
-    vector *vwxyz = vector_addition(vwxy, (number *)z);
+    // In chained operations, we need to ref the vectors that will be used multiple times
+    vector *vw    = vector_addition(v, (number *)number_ref(w));
+    vector *vwx   = vector_addition(vw, (number *)number_ref(x));
+    vector *vwxy  = vector_addition(vwx, (number *)number_ref(y));
+    vector *vwxyz = vector_addition(vwxy, (number *)z);  // z is used only once, no need to ref
 
     test_assert(VECTOR(vwxy, 0) == 35, "xwxy[0] == 40");
     test_assert(VECTOR(vwxy, 1) == 40, "xwxy[1] == 40");
     test_assert(VECTOR(vwxy, 2) == 45, "xwxy[2] == 45");
     test_assert(v == vwxyz, "Addition don't create a copy");
 
-    number_delete(v);
+    number_delete(v);  // This also deletes vw, vwx, vwxy, vwxyz since they're the same object
     number_delete(w);
     number_delete(x);
     number_delete(y);
-    number_delete(z);
+    // z is already unreffed by vector_addition
 
     return 0;
 }
@@ -294,7 +295,7 @@ int test_vector_map() {
 int test_vector_dot_product() {
     vector *v3 = vector_from_list(3, (NN_TYPE[]){1, 2, 3});
     vector *w2 = vector_from_list(3, (NN_TYPE[]){4, 5, 6});
-    test_assert(vector_dot_product(v3, w2) == 32,
+    test_assert(vector_dot_product(v3, number_ref(w2)) == 32,  // Ref w2 since vector_dot_product will unref it
                 "vector_dot_product(v3, w2) == 32");
     number_delete(v3);
     number_delete(w2);
