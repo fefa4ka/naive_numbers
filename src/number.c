@@ -101,7 +101,7 @@ int number_delete(void *number_ptr)
         CHECK(r == 0, "vector_delete() failed");
     } else if (NN_MATRIX == instance->type) {
         r = matrix_delete(instance);
-        CHECK(r == 0, "vector_delete() failed");
+        CHECK(r == 0, "matrix_delete() failed");
     }
     // TODO: tensor, ...
 
@@ -124,6 +124,9 @@ int object_delete(number *instance)
     return 0;
 
 error:
+    if (instance) {
+        free(instance);
+    }
     return 1;
 }
 

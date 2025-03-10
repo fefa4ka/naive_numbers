@@ -106,15 +106,18 @@
      printf("v2 initial ref count: %zu\n", v2->number.ref_count);
 
      // This creates a deeply nested chain of operations
+     vector *v1_clone = vector_clone(v1);
+     vector *v2_clone = vector_clone(v2);
+     
      vector *result = vector_addition(
                         vector_multiplication(
                           vector_addition(
-                            vector_map(vector_clone(v1), square),
-                            vector_map(vector_clone(v2), square)
+                            vector_map(v1_clone, square),
+                            vector_map(v2_clone, square)
                           ),
                           float_create(0.5)
                         ),
-                        (number *)v1
+                        (number *)number_ref((number*)v1)  // Explicitly ref v1 since we're using it directly
                       );
 
      printf("v1 ref count after operations: %zu\n", v1->number.ref_count);
@@ -122,9 +125,9 @@
      printf("result ref count: %zu\n", result->number.ref_count);
 
      // Clean up
-     number_delete(v1);
-     number_delete(v2);
-     number_delete(result);
+     number_delete((number*)v1);
+     number_delete((number*)v2);
+     number_delete((number*)result);
  }
 
  // Test repeated operations
