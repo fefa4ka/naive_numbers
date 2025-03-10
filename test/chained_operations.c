@@ -20,14 +20,6 @@
         printf("OK: " message "\n", ##__VA_ARGS__); \
     }
 
-// Function to measure memory usage before and after operations
-void check_memory_usage(const char* operation_name, void (*operation)(void)) {
-    // Perform the operation
-    operation();
-    
-    printf("Completed: %s\n", operation_name);
-}
-
 // Custom function for vector_map
 NN_TYPE square(NN_TYPE x) {
     return x * x;
