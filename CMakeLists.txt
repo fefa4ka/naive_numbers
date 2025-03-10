@@ -82,3 +82,8 @@ add_test(NAME number_memory_leak COMMAND test_number_leak_fix)
 add_executable(test_vector_clone test/vector_clone_test.c)
 target_link_libraries(test_vector_clone nn_probability)
 add_test(NAME vector_clone COMMAND test_vector_clone)
+
+# Vector map test
+add_executable(test_vector_map test/vector_map_test.c)
+target_link_libraries(test_vector_map nn_probability)
+add_test(NAME vector_map COMMAND test_vector_map)
