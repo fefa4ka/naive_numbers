@@ -66,6 +66,7 @@ int test_vector_chained_operations() {
     test_assert(VECTOR(result, 1) == 2.0*2.0*2.0 + 5.0, "Second element calculated correctly");
     test_assert(VECTOR(result, 2) == 2.0*3.0*3.0 + 6.0, "Third element calculated correctly");
     
+vector_print(v1);
     // Clean up
     number_delete(v1);
     number_delete(v2);
