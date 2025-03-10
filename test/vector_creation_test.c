@@ -86,7 +86,7 @@ int test_vector_manipulation() {
     
     // Test vector_subtraction
     vector *v3 = vector_clone(v1);
-    vector *diff = vector_subtraction(v3, (number*)vector_clone(v2));
+    vector *diff = vector_subtraction(v3, (number*)number_ref((number*)v2));
     test_assert(diff != NULL, "vector_subtraction returns non-NULL");
     test_assert(VECTOR(diff, 0) == -3.0, "vector_subtraction correctly subtracts first elements");
     test_assert(VECTOR(diff, 2) == -3.0, "vector_subtraction correctly subtracts last elements");
@@ -99,7 +99,7 @@ int test_vector_manipulation() {
     test_assert(VECTOR(scaled, 2) == 6.0, "vector_multiplication correctly scales last element");
     
     // Test vector_dot_product
-    NN_TYPE dot = vector_dot_product(v1, vector_clone(v2));
+    NN_TYPE dot = vector_dot_product(v1, (vector*)number_ref((number*)v2));
     test_assert(fabs(dot - 32.0) < 0.0001, "vector_dot_product calculates correct result");
     
     // Test vector_length
@@ -213,17 +213,17 @@ int test_vector_angles() {
     vector *v3 = vector_from_list(2, (NN_TYPE[]){1.0, 1.0});  // 45-degree vector
     
     // Test vector_angle
-    NN_TYPE angle1 = vector_angle(v1, vector_clone(v2));
+    NN_TYPE angle1 = vector_angle(v1, (vector*)number_ref((number*)v2));
     test_assert(fabs(angle1 - 90.0) < 0.0001, "vector_angle calculates 90 degrees correctly");
     
-    NN_TYPE angle2 = vector_angle(v1, vector_clone(v3));
+    NN_TYPE angle2 = vector_angle(v1, (vector*)number_ref((number*)v3));
     test_assert(fabs(angle2 - 45.0) < 0.0001, "vector_angle calculates 45 degrees correctly");
     
     // Test vector_is_perpendicular
-    int perp1 = vector_is_perpendicular(v1, vector_clone(v2));
+    int perp1 = vector_is_perpendicular(v1, (vector*)number_ref((number*)v2));
     test_assert(perp1 == 1, "vector_is_perpendicular correctly identifies perpendicular vectors");
     
-    int perp2 = vector_is_perpendicular(v1, vector_clone(v3));
+    int perp2 = vector_is_perpendicular(v1, (vector*)number_ref((number*)v3));
     test_assert(perp2 == 0, "vector_is_perpendicular correctly identifies non-perpendicular vectors");
     
     // Clean up

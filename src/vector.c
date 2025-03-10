@@ -154,11 +154,22 @@ error:
 
 vector *vector_clone(const vector *original)
 {
+    vector *clone;
     VECTOR_CHECK(original);
 
-    return vector_from_list(original->length, original->number.values);
+    clone = vector_create(original->length);
+    CHECK_MEMORY(clone);
+    
+    // Copy the values
+    memcpy(clone->number.values, original->number.values, 
+           original->length * sizeof(NN_TYPE));
+
+    return clone;
 
 error:
+    if (clone) {
+        number_delete((number*)clone);
+    }
     return NULL;
 }
 
