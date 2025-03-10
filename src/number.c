@@ -94,7 +94,7 @@ int number_delete(void *number_ptr)
     CHECK_MEMORY(number_ptr);
 
     instance = (number *)number_ptr;
-    if (NN_FLOAT >= instance->type) {
+    if (NN_DOUBLE >= instance->type) {
         free(instance);
     } else if (NN_VECTOR == instance->type) {
         r = object_delete(instance);
