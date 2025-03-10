@@ -326,6 +326,8 @@ vector *vector_transformation_by_matrix(matrix *A, vector *x)
         number_delete(column_number);
     }
 
+    number_unref((number*)x);
+
     return transormed_vector;
 
 error:
@@ -351,6 +353,8 @@ matrix *matrix_multiplication(matrix *A, matrix *B)
                 += MATRIX(A, row, index) * MATRIX(B, index, column);
         }
     }
+
+    number_unref((number*)B);
 
     return multiplicated;
 
