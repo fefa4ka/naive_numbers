@@ -136,10 +136,10 @@ vector *vector_from_list(size_t length, NN_TYPE values[])
     r = memcpy(vector_values, values, vector_length);
     CHECK(r == vector_values, "memcpy() %ld bytes failed", length);
 
-    instance->number.type   = NN_VECTOR;
+    instance->number.type      = NN_VECTOR;
     instance->number.ref_count = 1;
-    instance->length        = length;
-    instance->number.values = vector_values;
+    instance->length           = length;
+    instance->number.values    = vector_values;
 
     return instance;
 
@@ -304,6 +304,7 @@ vector *vector_shuffle(const vector *v)
                                       operation);                              \
             }                                                                  \
         }                                                                      \
+        number_unref((number*)w);                                                       \
                                                                                \
         return v;                                                              \
                                                                                \
@@ -353,6 +354,8 @@ vector *vector_addition_func(vector *v, const number *w)
         }
     }
 
+    number_unref((number*)w);
+
     return v;
 
 error:
@@ -384,6 +387,8 @@ NN_TYPE vector_dot_product(const vector *v, const vector *w)
 
     // #pragma omp parallel for simd reduction (+:product)
     VECTOR_FOREACH(v) { product += VECTOR(v, index) * VECTOR(w, index); }
+
+    number_unref((number*)w);
 
     return product;
 
@@ -721,6 +726,8 @@ NN_TYPE vector_angle(const vector *v, const vector *w)
 
     NN_TYPE angle_in_degrees = acos(cosine) * 180 / M_PI;
 
+    number_unref((number*)w);
+
     return angle_in_degrees;
 
 error:
@@ -746,6 +753,8 @@ int vector_is_perpendicular(const vector *v, const vector *w)
     VECTOR_CHECK(w);
 
     NN_TYPE dot_product = vector_dot_product(v, w);
+
+    number_unref((number*)w);
 
     return dot_product == 0 ? 1 : 0;
 
