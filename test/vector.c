@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <omp.h>
 
 #define log_print(type, message, ...)                                          \
     printf(type "\t" message "\n", ##__VA_ARGS__)
@@ -317,43 +318,78 @@ int test_vector_shuffle() {
     return 0;
 }
 
-int test_vector_uniq() {
+int test_vector_unique() {
     vector *v = vector_from_list(5, (NN_TYPE[]){1, 2, 3, 2, 1});
-    vector *v_uniq = vector_uniq(v);
+    vector *v_unique = vector_unique(v);
 
-    test_assert(v_uniq->length == 3, "Vector length is correct after uniq");
+    test_assert(v_unique->length == 3, "Vector length is correct after uniq");
     test_assert(vector_index_of(v, 1) == 0, "Vector contains 1 after uniq");
     test_assert(vector_index_of(v, 2) == 1, "Vector contains 2 after uniq");
     test_assert(vector_index_of(v, 3) == 2, "Vector contains 3 after uniq");
-    
+
     number_delete(v);
-    number_delete(v_uniq);
+    number_delete(v_unique);
 
     return 0;
+}
+
+int test_vector_non_zero_length()
+{
+    // Seed the random number generator
+    srand(time(NULL));
+    #define ARRAY_SIZE 10000000  // 10 million elements
+
+    // Allocate memory for the array
+    vector *v = vector_create(ARRAY_SIZE);
+    size_t non_zero_orig_count = 0;
+
+    // Initialise the array with random values
+    for (size_t i = 0; i < ARRAY_SIZE; i++) {
+        VECTOR(v, i) = (rand() % 10) ? (float)rand() / RAND_MAX : 0.0f;  // 90% non-zero, 10% zero
+        if(VECTOR(v, i) != 0) non_zero_orig_count++;
+    }
+
+    double start_time = omp_get_wtime();
+    size_t non_zero_count = vector_non_zero_length(v);
+    double end_time = omp_get_wtime();
+
+    printf("TIME\t%f seconds\n", end_time - start_time);
+    number_delete(v);
+
+    return 0;
+}
+
+#define test(method) { \
+double start_time = omp_get_wtime(); \
+int result = test_##method(); \
+double end_time = omp_get_wtime(); \
+printf("OK\t[" #method "]: %f seconds\n", result == 0 ? "OK" : "FAIL", omp_get_wtime() - start_time); \
 }
 
 int main()
 {
-    test_vector_create();
-    test_vector_clone();
-    test_vector_reshape();
+    test(vector_create);
+    test(vector_clone);
+    test(vector_reshape);
 
-    test_vector_unit();
-    test_vector_length();
+    test(vector_unit);
+    test(vector_length);
 
-    test_vector_2d();
-    test_vector_3d();
+    test(vector_2d);
+    test(vector_3d);
 
-    test_vector_addition();
-    test_vector_addition_advanced();
+    test(vector_addition);
+    test(vector_addition_advanced);
 
-    test_vector_index_of();
-    test_vector_map();
-    test_vector_dot_product();
+    test(vector_index_of);
+    test(vector_map);
+    test(vector_dot_product);
 
-    test_vector_shuffle();
-    test_vector_uniq();
+    test(vector_shuffle);
+    test(vector_unique);
+
+    test(vector_non_zero_length);
+
 
     return 0;
 }
-

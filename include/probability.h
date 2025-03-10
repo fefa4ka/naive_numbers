@@ -11,11 +11,9 @@ void probability_delete(probability *space);
 
 // Getters
 NN_TYPE probability_mass_of(probability *space, char *field, NN_TYPE value);
-
-// NN_TYPE probability_mass_and(probability *space, char **fields, NN_TYPE *values);
-// NN_TYPE probability_mass_or(probability *space, char **fields, NN_TYPE *values);
-// NN_TYPE probability_conditional(probability *space, char *A_field, NN_TYPE A_value, char *B_field, NN_TYPE B_value);
-// NN_TYPE probability_bayes(probability *space, char *A_field, NN_TYPE A_value, char *B_field, NN_TYPE B_value);
+NN_TYPE probability_mass_and(probability *space, char **fields, NN_TYPE *values);
+NN_TYPE probability_conditional(probability *space, char *A_field, NN_TYPE A_value, char *B_field, NN_TYPE B_value);
+NN_TYPE probability_bayes(probability *space, char *A_field, NN_TYPE A_value, char *B_field, NN_TYPE B_value);
 // //NN_TYPE probability_density(probability *space, NN_TYPE a, NN_TYPE b);
 // 
 // // Properties

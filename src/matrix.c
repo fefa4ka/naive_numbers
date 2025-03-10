@@ -1,4 +1,5 @@
 #include "matrix.h"
+#include "number.h"
 #include "vector.h"
 #include <math.h>
 
@@ -10,9 +11,10 @@
     instance = malloc(sizeof(matrix));                                         \
     CHECK_MEMORY(instance);                                                    \
                                                                                \
-    instance->number.type = NN_MATRIX;                                         \
-    instance->rows        = rows_nr;                                           \
-    instance->columns     = columns_nr;
+    instance->number.type      = NN_MATRIX;                                    \
+    instance->number.ref_count = 1;                                            \
+    instance->rows             = rows_nr;                                      \
+    instance->columns          = columns_nr;
 
 #define MATRIX_OPERATION(A, B, expression)                                     \
     MATRIX_FOREACH(A)                                                          \
@@ -46,7 +48,7 @@ error:
     return NULL;
 }
 
-matrix *matrix_identity(size_t size)
+matrix *matrix_identity(size_t size, NN_TYPE default_value)
 {
     matrix *instance;
 
@@ -54,7 +56,7 @@ matrix *matrix_identity(size_t size)
     MATRIX_CHECK(instance);
 
     while (size--) {
-        MATRIX(instance, size, size) = 1;
+        MATRIX(instance, size, size) = default_value;
     }
 
     return instance;
@@ -188,6 +190,64 @@ error:
     return NULL;
 }
 
+matrix *matrix_sub_matrix(matrix *A, size_t from_row, size_t from_column,
+                          size_t rows, size_t columns)
+{
+    matrix *sub_matrix;
+
+    MATRIX_CHECK(A);
+    CHECK(from_row + rows <= A->rows, "Invalid matrix row");
+    CHECK(from_column + columns <= A->columns, "Invalid matrix column");
+
+    sub_matrix = matrix_create(rows, columns);
+    MATRIX_CHECK(sub_matrix);
+
+    MATRIX_FOREACH(sub_matrix)
+    {
+        MATRIX(sub_matrix, row, column)
+            = MATRIX(A, from_row + row, from_column + column);
+    }
+
+    return sub_matrix;
+
+error:
+    return NULL;
+}
+
+matrix *matrix_minor_matrix(matrix *A, size_t exclude_row,
+                            size_t exclude_column)
+{
+    matrix *minor_matrix;
+
+    MATRIX_CHECK(A);
+    CHECK(exclude_row < A->rows && exclude_column < A->columns,
+          "Invalid matrix minor");
+
+    minor_matrix = matrix_create(A->rows - 1, A->columns - 1);
+    MATRIX_CHECK(minor_matrix);
+
+    MATRIX_FOREACH(A)
+    {
+        size_t minor_row;
+        size_t minor_column;
+
+        if (row == exclude_row || column == exclude_column) {
+            continue;
+        }
+
+        minor_row = row > exclude_row ? row - 1 : row;
+
+        minor_column = column > exclude_column ? column - 1 : column;
+
+        MATRIX(minor_matrix, minor_row, minor_column) = MATRIX(A, row, column);
+    }
+
+    return minor_matrix;
+
+error:
+    return NULL;
+}
+
 matrix *matrix_transpose(matrix *instance)
 {
     matrix *transposed;
@@ -298,7 +358,7 @@ error:
     return NULL;
 }
 
-matrix *matrix_map(matrix *A, float operation(float))
+matrix *matrix_map(matrix *A, NN_TYPE operation(NN_TYPE))
 {
     MATRIX_CHECK(A);
 
@@ -323,20 +383,20 @@ error:
     return NULL;
 }
 
-float matrix_sum(matrix *A)
+NN_TYPE matrix_sum(matrix *A)
 {
     MATRIX_CHECK(A);
 
     return vector_sum(A->number.values);
 
 error:
-    return 0;
+    return NAN;
 }
 
-float matrix_trace(matrix *A)
+NN_TYPE matrix_trace(matrix *A)
 {
-    float  sum;
-    size_t index;
+    NN_TYPE sum;
+    size_t  index;
 
     MATRIX_CHECK(A);
 
@@ -350,12 +410,12 @@ float matrix_trace(matrix *A)
     return sum;
 
 error:
-    return 0;
+    return NAN;
 }
 
-float matrix_frobenius_norm(matrix *A)
+NN_TYPE matrix_frobenius_norm(matrix *A)
 {
-    float   sum;
+    NN_TYPE sum;
     matrix *product;
     MATRIX_CHECK(A);
 
@@ -370,12 +430,12 @@ float matrix_frobenius_norm(matrix *A)
     return sqrt(sum);
 
 error:
-    return 0;
+    return NAN;
 }
 
-float matrix_frobenius_norm_by_trace(matrix *instance)
+NN_TYPE matrix_frobenius_norm_by_trace(matrix *instance)
 {
-    float   frobenius;
+    NN_TYPE frobenius;
     matrix *A;
     matrix *AT;
     matrix *A_AT;
@@ -398,7 +458,7 @@ float matrix_frobenius_norm_by_trace(matrix *instance)
     return frobenius;
 
 error:
-    return 0;
+    return NAN;
 }
 
 int matrix_is_equal(matrix *A, matrix *B)
@@ -412,6 +472,98 @@ error:
     return -1;
 }
 
+int matrix_lu_decomposition(matrix *A, matrix **L, matrix **U)
+{
+    matrix *_L;
+    matrix *_U;
+    size_t  rank;
+
+    MATRIX_CHECK(A);
+    CHECK(A->rows > 0, "Matrix is empty");
+    CHECK(A->rows == A->columns, "Matrix is not square");
+
+    _L   = matrix_identity(A->rows, 1);
+    _U   = matrix_clone(A);
+    rank = A->rows;
+    MATRIX_CHECK(_L);
+    MATRIX_CHECK(_U);
+
+    // Gauss-Jordan elimination
+    // https://en.wikipedia.org/wiki/LU_decomposition#pragma omp parallel for
+    for (size_t pivot = 0; pivot < rank; pivot++) {
+        for (size_t row = pivot + 1; row < rank; row++) {
+            NN_TYPE factor = MATRIX(_U, row, pivot) / MATRIX(_U, pivot, pivot);
+            MATRIX(_L, row, pivot) = factor;
+            for (size_t col = pivot; col < rank; col++) {
+                MATRIX(_U, row, col) -= factor * MATRIX(_U, pivot, col);
+                MATRIX(_U, row, col)
+                    = (fabs(MATRIX(_U, row, col)) < NN_TYPE_EPSILON)
+                          ? 0.0
+                          : MATRIX(_U, row, col);
+            }
+        }
+    }
+
+    *L = _L;
+    *U = _U;
+
+    return rank;
+
+error:
+    if (_L)
+        number_delete(_L);
+    if (_U)
+        number_delete(_U);
+
+    return 0;
+}
+
+NN_TYPE matrix_determinant(matrix *A)
+{
+    NN_TYPE determinant;
+
+    MATRIX_CHECK(A);
+    CHECK(A->rows == A->columns, "Matrix is not square");
+
+    if (A->rows == 1 && A->columns == 1) {
+        determinant = MATRIX(A, 0, 0);
+    } else if (A->rows == 2 && A->columns == 2) {
+        determinant = MATRIX(A, 0, 0) * MATRIX(A, 1, 1)
+                      - MATRIX(A, 0, 1) * MATRIX(A, 1, 0);
+    } else if (A->rows == 3 && A->columns == 3) {
+        // Using Laplace expansion
+        // https://en.wikipedia.org/wiki/Laplace_expansion
+        determinant = 0;
+        for (size_t column = 0; column < A->columns; column++) {
+            matrix *sub_matrix;
+            NN_TYPE cofactor;
+            sub_matrix = matrix_minor_matrix(A, 0, column);
+            CHECK_MEMORY(sub_matrix);
+            cofactor = matrix_determinant(sub_matrix)
+                       * ((column % 2 ? -1 : 1) * MATRIX(A, 0, column));
+            determinant += cofactor;
+            number_delete(sub_matrix);
+        }
+    } else {
+        // Using LU decomposition
+        matrix *L;
+        matrix *U;
+        int     rank = matrix_lu_decomposition(A, &L, &U);
+        CHECK(rank == A->rows, "Matrix LU decomposition rank equals %d", rank);
+        determinant = 1;
+        matrix_print(U);
+        for (size_t row = 0; row < A->rows; row++) {
+            determinant *= MATRIX(U, row, row);
+        }
+        number_delete(L);
+        number_delete(U);
+    }
+
+    return determinant;
+
+error:
+    return NAN;
+}
 
 void matrix_print(matrix *instance)
 {

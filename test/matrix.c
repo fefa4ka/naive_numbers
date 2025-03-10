@@ -1,6 +1,7 @@
 /* https://mathworld.wolfram.com/MatrixTrace.html */
 
 #include "matrix.h"
+#include "number.h"
 #include "vector.h"
 #include <math.h>
 #include <nn.h>
@@ -8,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
 
 #define log_print(type, message, ...)                                          \
     printf(type "\t" message "\n", ##__VA_ARGS__)
@@ -69,7 +71,7 @@ int test_matrix_seed()
 int test_matrix_identity()
 {
     int     size = 3;
-    matrix *m    = matrix_identity(size);
+    matrix *m    = matrix_identity(size, 1.0);
     test_assert(m, "Identity matrix allocated");
     test_assert(m->rows == size, "Identity matrix rows initialized");
     test_assert(m->columns == size, "Identity matrix columns initialized");
@@ -396,7 +398,7 @@ int test_matrix_multiplication()
     return 0;
 }
 
-float sigmoid(float value) { return 1.f / (1.f + exp(value * -1.f)); }
+NN_TYPE sigmoid(NN_TYPE value) { return 1.f / (1.f + exp(value * -1.f)); }
 int   test_matrix_map()
 {
     int     rows     = 2;
@@ -547,6 +549,168 @@ int test_matrix_is_equal()
     return 0;
 }
 
+int test_matrix_determinant_2d()
+{
+    int     rows     = 2;
+    int     cols     = 2;
+    NN_TYPE values[] = {1.0, 2.0,
+                        3.0, 4.0};
+    matrix *A        = matrix_create_from_list(rows, cols, values);
+    test_assert(A, "Matrix A allocated");
+    test_assert(A->rows == rows, "Matrix A rows initialized");
+    test_assert(A->columns == cols, "Matrix A columns initialized");
+
+    float expected_determinant = 1*4-3*2;
+    float determinant          = matrix_determinant(A);
+    test_assert(determinant == expected_determinant,
+                "Matrix determinant equals expected value");
+
+    int r = number_delete(A);
+    test_assert(r == 0, "Matrix A deleted");
+
+    return 0;
+}
+
+int test_matrix_sub_matrix()
+{
+    // Extract 2x2 matrix from 4x4 matrix
+    int     rows     = 4;
+    int     cols     = 4;
+    NN_TYPE values[] = {1.0, 2.0, 3.0, 4.0,
+                        5.0, 6.0, 7.0, 8.0,
+                        9.0, 10.0, 11.0, 12.0,
+                        13.0, 14.0, 15.0, 16.0};
+    matrix *A        = matrix_create_from_list(rows, cols, values);
+    test_assert(A, "Matrix A allocated");
+    test_assert(A->rows == rows, "Matrix A rows initialized");
+    test_assert(A->columns == cols, "Matrix A columns initialized");
+
+    int     sub_rows     = 2;
+    int     sub_cols     = 2;
+    matrix *sub_matrix  = matrix_sub_matrix(A, 1, 1, sub_rows, sub_cols);
+    test_assert(sub_matrix, "Sub matrix allocated");
+    test_assert(sub_matrix->rows == sub_rows, "Sub matrix rows initialized");
+    test_assert(sub_matrix->columns == sub_cols,
+                "Sub matrix columns initialized");
+
+    MATRIX_FOREACH(sub_matrix)
+    {
+        // Print original and sub matrix value
+        test_assert(MATRIX(sub_matrix, row, column) == MATRIX(A, row + 1, column + 1),
+                    "Sub matrix element equals expected value");
+    }
+
+    int r = number_delete(A);
+    test_assert(r == 0, "Matrix A deleted");
+
+    r = number_delete(sub_matrix);
+    test_assert(r == 0, "Sub matrix deleted");
+
+    return 0;
+}
+
+int test_matrix_minor_matrix()
+{
+    int     rows     = 3;
+    int     cols     = 3;
+    NN_TYPE values[] = {1.0, 2.0, 3.0,
+                        4.0, 5.0, 6.0,
+                        7.0, 8.0, 9.0};
+    matrix *A        = matrix_create_from_list(rows, cols, values);
+    test_assert(A, "Matrix A allocated");
+
+    matrix *minor_matrix = matrix_minor_matrix(A, 0, 0);
+    test_assert(minor_matrix, "Minor matrix allocated");
+    test_assert(minor_matrix->rows == 2, "Minor matrix rows initialized");
+    test_assert(minor_matrix->columns == 2, "Minor matrix columns initialized");
+
+    MATRIX_FOREACH(minor_matrix)
+    {
+        test_assert(MATRIX(minor_matrix, row, column) == MATRIX(A, row + 1, column + 1),
+                    "Minor matrix element equals expected value");
+    }
+
+    int r = number_delete(A);
+    test_assert(r == 0, "Matrix A deleted");
+
+    r = number_delete(minor_matrix);
+    test_assert(r == 0, "Minor matrix deleted");
+
+    return 0;
+}
+
+int test_matrix_lu_decomposition()
+{
+    int     rows     = 3;
+    int     cols     = 3;
+    NN_TYPE values[] = {1.0, 2.0, 3.0,
+                        4.0, 5.0, 6.0,
+                        7.0, 8.0, 9.0};
+    matrix *A        = matrix_create_from_list(rows, cols, values);
+    test_assert(A, "Matrix A allocated");
+    test_assert(A->rows == rows, "Matrix A rows initialized");
+    test_assert(A->columns == cols, "Matrix A columns initialized");
+
+    matrix *L;
+    matrix *U;
+    int rank = matrix_lu_decomposition(A, &L, &U);
+    test_assert(rank == 3, "Matrix LU decomposition rank equals 3");
+    matrix *LU = matrix_multiplication(L, U);
+    test_assert(matrix_is_equal(A, LU), "Matrix LU equals matrix A");
+    number_delete(LU);
+    number_delete(L);
+    number_delete(U);
+    number_delete(A);
+    return 0;
+}
+
+int test_matrix_determinant_3d()
+{
+    int     rows     = 3;
+    int     cols     = 3;
+    NN_TYPE values[] = {2.0, 3.0, 1.0,
+                        4.0, 1.0, 5.0,
+                        6.0, 7.0, 2.0};
+    matrix *A        = matrix_create_from_list(rows, cols, values);
+    test_assert(A, "Matrix A allocated");
+    test_assert(A->rows == rows, "Matrix A rows initialized");
+    test_assert(A->columns == cols, "Matrix A columns initialized");
+
+    float expected_determinant = 22;
+    float determinant          = matrix_determinant(A);
+    test_assert(determinant == expected_determinant,
+                "Matrix determinant equals expected value");
+
+    int r = number_delete(A);
+    test_assert(r == 0, "Matrix A deleted");
+
+    return 0;
+}
+
+int test_matrix_determinant_4d()
+{
+    int     rows     = 4;
+    int     cols     = 4;
+    NN_TYPE values[] = {2.0, 3.0, 1.0, 4.0,
+                        4.0, 1.0, 5.0, 2.0,
+                        6.0, 7.0, 2.0, 3.0,
+                        8.0, 9.0, 3.0, 4.0};
+    matrix *A        = matrix_create_from_list(rows, cols, values);
+    test_assert(A, "Matrix A allocated");
+    test_assert(A->rows == rows, "Matrix A rows initialized");
+    test_assert(A->columns == cols, "Matrix A columns initialized");
+
+    float expected_determinant = -0;
+    float determinant          = matrix_determinant(A);
+    printf("D: %f <> %f", determinant, expected_determinant);
+    test_assert(determinant == expected_determinant,
+                "Matrix determinant equals expected value");
+    int r = number_delete(A);
+    test_assert(r == 0, "Matrix A deleted");
+
+    return 0;
+}
+
 int main()
 {
     test_matrix_create();
@@ -567,4 +731,10 @@ int main()
     test_matrix_frobenius_norm_by_trace();
     test_matrix_is_equal();
     test_vector_transformation_by_matrix();
+    test_matrix_determinant_2d();
+    test_matrix_sub_matrix();
+    test_matrix_minor_matrix();
+    test_matrix_lu_decomposition();
+    test_matrix_determinant_3d();
+    test_matrix_determinant_4d();
 }

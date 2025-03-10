@@ -1,11 +1,12 @@
 #include "vector.h"
 
 #include "number.h"
-#include "utils.h"
 #include "util/error.h"
+#include "utils.h"
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+
 
 #define VECTOR_COMMON_SIZE      128
 #define COPY_ALIGMENT           32
@@ -28,11 +29,14 @@
  * Creates a new vector instance with the specified length.
  *
  * @param length The length of the vector to create.
- * @return A pointer to the newly created vector instance, or NULL if an error occurred.
+ * @return A pointer to the newly created vector instance, or NULL if an error
+ * occurred.
  *
- * @throws MemoryError if there is not enough memory to allocate the vector or its values.
+ * @throws MemoryError if there is not enough memory to allocate the vector or
+ * its values.
  *
- * @note The caller is responsible for freeing the memory allocated by this function.
+ * @note The caller is responsible for freeing the memory allocated by this
+ * function.
  */
 vector *vector_create(size_t length)
 {
@@ -45,9 +49,10 @@ vector *vector_create(size_t length)
     values = calloc(length, sizeof(NN_TYPE));
     CHECK_MEMORY_LOG(values, "Size: %lu", length);
 
-    instance->number.type   = NN_VECTOR;
-    instance->length        = length;
-    instance->number.values = values;
+    instance->number.type      = NN_VECTOR;
+    instance->number.ref_count = 1;
+    instance->length           = length;
+    instance->number.values    = values;
 
     return instance;
 
@@ -59,15 +64,16 @@ error:
 }
 
 /**
- * Initializes a vector with either a default value or random values within a range.
+ * Initializes a vector with either a default value or random values within a
+ * range.
  *
  * @param instance A pointer to the vector to be initialized.
- * @param default_value The default value to initialize the vector with. If 0, random values will be used instead.
- * @return A pointer to the initialized vector. If an error occurs, NULL is returned.
+ * @param default_value The default value to initialize the vector with. If 0,
+ * random values will be used instead.
+ * @return A pointer to the initialized vector. If an error occurs, NULL is
+ * returned.
  *
  * @throws VECTOR_ERROR_NULL_INSTANCE if instance is NULL.
- *
- * @note This function can be parallelized using OpenMP by uncommenting the #pragma directive.
  */
 vector *vector_seed(vector *instance, NN_TYPE default_value)
 {
@@ -101,8 +107,10 @@ error:
  * @return A pointer to the newly created vector instance.
  * @retval NULL if an error occurred during creation.
  *
- * @note The caller is responsible for freeing the memory allocated for the vector instance.
- * @note The caller is responsible for freeing the memory allocated for the vector values.
+ * @note The caller is responsible for freeing the memory allocated for the
+ * vector instance.
+ * @note The caller is responsible for freeing the memory allocated for the
+ * vector values.
  *
  * @warning The length parameter must be greater than zero.
  * @warning The values parameter must not be NULL.
@@ -129,6 +137,7 @@ vector *vector_from_list(size_t length, NN_TYPE values[])
     CHECK(r == vector_values, "memcpy() %ld bytes failed", length);
 
     instance->number.type   = NN_VECTOR;
+    instance->number.ref_count = 1;
     instance->length        = length;
     instance->number.values = vector_values;
 
@@ -143,7 +152,7 @@ error:
     return NULL;
 }
 
-vector *vector_clone(vector *original)
+vector *vector_clone(const vector *original)
 {
     VECTOR_CHECK(original);
 
@@ -163,9 +172,11 @@ error:
  * @retval NULL If an error occurred during the reshaping process.
  *
  * @throws VECTOR_ERROR_NULL_INSTANCE If the instance pointer is NULL.
- * @throws VECTOR_ERROR_MEMORY If there was an error allocating memory for the reshaped vector.
+ * @throws VECTOR_ERROR_MEMORY If there was an error allocating memory for the
+ * reshaped vector.
  *
- * @note If the new length is greater than the current length, the additional elements will be initialized to 0.
+ * @note If the new length is greater than the current length, the additional
+ * elements will be initialized to 0.
  */
 vector *vector_reshape(vector *instance, size_t length)
 {
@@ -179,7 +190,8 @@ vector *vector_reshape(vector *instance, size_t length)
     CHECK_MEMORY(reshaped);
     instance->number.values = reshaped;
 
-    // Initialize additional elements to 0 if new length is greater than current length
+    // Initialize additional elements to 0 if new length is greater than current
+    // length
     if (length > instance->length) {
         memset((NN_TYPE *)instance->number.values + instance->length, 0,
                (length - instance->length) * sizeof(NN_TYPE));
@@ -200,28 +212,29 @@ error:
  *
  * @return A pointer to the shuffled vector instance.
  */
-vector *vector_shuffle(vector *v) {
+vector *vector_shuffle(const vector *v)
+{
     size_t size = v->length;
-    for(size_t index = 0; index < size; index++) {
+    for (size_t index = 0; index < size; index++) {
         NN_TYPE shuffled_value;
-        size_t shuffled;
-        
+        size_t  shuffled;
+
         shuffled = (size_t)nn_random_range(0, size);
-        if(shuffled == index) {
-            if(index == size - 1) {
-                if(index != 0) {
+        if (shuffled == index) {
+            if (index == size - 1) {
+                if (index != 0) {
                     shuffled = index - 1;
                 }
             } else {
                 shuffled = index + 1;
             }
         }
-        
-        shuffled_value = VECTOR(v, index);
-        VECTOR(v, index) = VECTOR(v, shuffled);
+
+        shuffled_value      = VECTOR(v, index);
+        VECTOR(v, index)    = VECTOR(v, shuffled);
         VECTOR(v, shuffled) = shuffled_value;
     }
-    
+
     return v;
 }
 
@@ -248,7 +261,7 @@ vector *vector_shuffle(vector *v) {
     }
 
 #define VECTOR_METHOD_OPERATION(name, operation)                               \
-    vector *vector_##name(vector *v, number *w)                                \
+    vector *vector_##name(vector *v, const number *w)                          \
     {                                                                          \
         int   power;                                                           \
         void *values_added_ptr;                                                \
@@ -299,11 +312,11 @@ vector *vector_shuffle(vector *v) {
     }
 
 VECTOR_METHOD_OPERATION(addition, +);
-VECTOR_METHOD_OPERATION(substraction, -);
+VECTOR_METHOD_OPERATION(subtraction, -);
 VECTOR_METHOD_OPERATION(multiplication, *);
 VECTOR_METHOD_OPERATION(division, /);
 
-vector *vector_addition_func(vector *v, number *w)
+vector *vector_addition_func(vector *v, const number *w)
 {
     int   power;
     void *values_added_ptr;
@@ -321,10 +334,10 @@ vector *vector_addition_func(vector *v, number *w)
 
 #pragma omp for schedule(auto)
     for (size_t index = 0; index < (v)->length; index = index + power) {
-        void *block_ptr = (float *)(v->number.values) + index;
+        void *block_ptr = (NN_TYPE *)(v->number.values) + index;
 
         if (NN_VECTOR == w->type) {
-            values_added_ptr = (float *)(w->values) + index;
+            values_added_ptr = (NN_TYPE *)(w->values) + index;
             __builtin_prefetch(values_added_ptr + power, 0, 1);
         }
         __builtin_prefetch(block_ptr + power, 1, 1);
@@ -354,16 +367,20 @@ error:
  * @return The dot product of the two vectors.
  * @throws If either v or w is NULL, an error is thrown and 0 is returned.
  *
- * This function calculates the dot product of two vectors. The dot product is defined as the sum of the products of the corresponding entries of the two vectors. For example, if v = [1, 2, 3] and w = [4, 5, 6], then the dot product of v and w is 1*4 + 2*5 + 3*6 = 32.
+ * This function calculates the dot product of two vectors. The dot product is
+ * defined as the sum of the products of the corresponding entries of the two
+ * vectors. For example, if v = [1, 2, 3] and w = [4, 5, 6], then the dot
+ * product of v and w is 1*4 + 2*5 + 3*6 = 32.
  *
- * Note that this function assumes that the two vectors have the same length. If they do not, the behavior of the function is undefined.
+ * Note that this function assumes that the two vectors have the same length. If
+ * they do not, the behavior of the function is undefined.
  */
-float vector_dot_product(vector *v, vector *w)
+NN_TYPE vector_dot_product(const vector *v, const vector *w)
 {
     VECTOR_CHECK(v);
     VECTOR_CHECK(w);
 
-    float product = 0.0f;
+    NN_TYPE product = 0.0f;
 
     // #pragma omp parallel for simd reduction (+:product)
     VECTOR_FOREACH(v) { product += VECTOR(v, index) * VECTOR(w, index); }
@@ -379,9 +396,13 @@ error:
  *
  * @param v_block A pointer to the block of memory to perform the operation on.
  * @param size The size of the block of memory.
- * @param operation The operation to perform on each element of the block of memory.
+ * @param operation The operation to perform on each element of the block of
+ * memory.
  *
- * This macro defines a vector map operation for a given block size. The operation is performed on each element of the block of memory. The block of memory is assumed to be a vector of type v##size##sf, where v is the vector type and size is the block size.
+ * This macro defines a vector map operation for a given block size. The
+ * operation is performed on each element of the block of memory. The block of
+ * memory is assumed to be a vector of type v##size##sf, where v is the vector
+ * type and size is the block size.
  */
 #define VECTOR_MAP_OPERATION(v_block, size, operation)                         \
     case size: {                                                               \
@@ -404,7 +425,7 @@ vector *vector_map(vector *v, NN_TYPE operation(NN_TYPE))
 
 #pragma omp for schedule(static)
     for (size_t index = 0; index < (v)->length; index = index + power) {
-        void *block_ptr = (float *)(v->number.values) + index;
+        void *block_ptr = (NN_TYPE *)(v->number.values) + index;
 
         __builtin_prefetch(block_ptr + power, 1, 1);
 
@@ -446,7 +467,7 @@ vector *vector_map_value(vector *v, NN_TYPE operation(NN_TYPE, NN_TYPE *),
 
 #pragma omp for schedule(static)
     for (size_t index = 0; index < (v)->length; index = index + power) {
-        void *block_ptr = (float *)(v->number.values) + index;
+        void *block_ptr = (NN_TYPE *)(v->number.values) + index;
 
         __builtin_prefetch(block_ptr + power, 1, 1);
 
@@ -467,7 +488,7 @@ error:
     return NULL;
 }
 
-int vector_index_of(vector *v, float needle)
+int vector_index_of(const vector *v, NN_TYPE needle)
 {
     VECTOR_CHECK(v);
 
@@ -484,7 +505,7 @@ error:
     return -1;
 }
 
-NN_TYPE vector_length(vector *v)
+NN_TYPE vector_length(const vector *v)
 {
     VECTOR_CHECK(v);
 
@@ -494,7 +515,7 @@ error:
     return 0;
 }
 
-NN_TYPE vector_sum(vector *v)
+NN_TYPE vector_sum(const vector *v)
 {
     VECTOR_CHECK(v);
 
@@ -509,7 +530,7 @@ error:
     return 0;
 }
 
-NN_TYPE vector_sum_to(vector *v, size_t to_index)
+NN_TYPE vector_sum_to(const vector *v, size_t to_index)
 {
     VECTOR_CHECK(v);
 
@@ -529,7 +550,7 @@ error:
     return 0;
 }
 
-NN_TYPE vector_sum_between(vector *v, size_t from_index, size_t to_index)
+NN_TYPE vector_sum_between(const vector *v, size_t from_index, size_t to_index)
 {
     VECTOR_CHECK(v);
 
@@ -544,22 +565,24 @@ NN_TYPE vector_sum_between(vector *v, size_t from_index, size_t to_index)
 error:
     return 0;
 }
-vector *vector_uniq(vector *instance) {
-    size_t size;
-    NN_TYPE *uniq_values;
-    vector *uniq_vector;
+vector *vector_unique(const vector *instance)
+{
+    size_t   size;
+    NN_TYPE *unique_values;
+    vector  *unique_vector;
 
     VECTOR_CHECK(instance);
-    
+
     size = 0;
-    uniq_values = nn_uniq_numbers(instance->number.values, instance->length, &size);
-    CHECK_MEMORY(uniq_values);
+    unique_values
+        = nn_unique_numbers(instance->number.values, instance->length, &size);
+    CHECK_MEMORY(unique_values);
 
-    uniq_vector = vector_from_list(size, uniq_values);
-    free(uniq_values);
+    unique_vector = vector_from_list(size, unique_values);
+    free(unique_values);
 
-    return uniq_vector;
-    
+    return unique_vector;
+
 error:
     return NULL;
 }
@@ -569,16 +592,19 @@ error:
  *
  * @param v A pointer to the vector to be normalized.
  *
- * @return A pointer to a new vector that is the unit vector of the input vector.
+ * @return A pointer to a new vector that is the unit vector of the input
+ * vector.
  *
  * @throws NULL if the input vector is NULL.
  * @throws NULL if there is an error during the normalization process.
  *
- * This function takes a pointer to a vector and returns a new vector that is the unit vector of the input vector. The input vector is not modified.
- * The unit vector is a vector with the same direction as the input vector, but with a length of 1.
+ * This function takes a pointer to a vector and returns a new vector that is
+ * the unit vector of the input vector. The input vector is not modified. The
+ * unit vector is a vector with the same direction as the input vector, but with
+ * a length of 1.
  *
  */
-vector *vector_unit(vector *v)
+vector *vector_unit(const vector *v)
 {
     vector *unit_vector;
     VECTOR_CHECK(v);
@@ -592,7 +618,7 @@ vector *vector_unit(vector *v)
     return unit_vector;
 
 error:
-    if(length) {
+    if (length) {
         number_delete(length);
     }
     return NULL;
@@ -609,19 +635,19 @@ error:
  * @throws A null pointer exception if the vector pointer is null.
  * @throws An invalid argument exception if the power is 0.
  */
-NN_TYPE vector_l_norm(vector *v, int power)
+NN_TYPE vector_l_norm(const vector *v, int power)
 {
     VECTOR_CHECK(v);
     CHECK(power, "P = 0 for L_norm");
 
-    float l_norm = 0;
+    NN_TYPE l_norm = 0;
 
     size_t index = v->length;
     while (index--) {
         l_norm += pow(fabs(VECTOR(v, index)), power);
     }
 
-    l_norm = pow(l_norm, (float)1 / power);
+    l_norm = pow(l_norm, (NN_TYPE)1 / power);
 
     return l_norm;
 
@@ -629,15 +655,15 @@ error:
     return 0;
 }
 
-NN_TYPE vector_max_norm(vector *v)
+NN_TYPE vector_max_norm(const vector *v)
 {
     VECTOR_CHECK(v);
 
-    float max = 0;
+    NN_TYPE max = 0;
 
     size_t index = v->length;
     while (index--) {
-        float value = fabs(VECTOR(v, index));
+        NN_TYPE value = fabs(VECTOR(v, index));
         if (value > max) {
             max = value;
         }
@@ -649,16 +675,16 @@ error:
     return 0;
 }
 
-size_t vector_max_index(vector *v)
+size_t vector_max_index(const vector *v)
 {
     VECTOR_CHECK(v);
 
-    float  max       = 0;
-    size_t max_index = 0;
+    NN_TYPE max       = 0;
+    size_t  max_index = 0;
 
     size_t index = v->length;
     while (index--) {
-        float value = fabs(VECTOR(v, index));
+        NN_TYPE value = fabs(VECTOR(v, index));
         if (value > max) {
             max       = value;
             max_index = index;
@@ -681,18 +707,19 @@ error:
  * @throws If either v or w is NULL, an error is thrown.
  *
  * @note This function assumes that the vectors are non-zero and non-null.
- * @note The angle is calculated using the dot product and the lengths of the vectors.
+ * @note The angle is calculated using the dot product and the lengths of the
+ * vectors.
  * @note The angle is returned in degrees.
  */
-NN_TYPE vector_angle(vector *v, vector *w)
+NN_TYPE vector_angle(const vector *v, const vector *w)
 {
     VECTOR_CHECK(v);
     VECTOR_CHECK(w);
 
-    float cosine
+    NN_TYPE cosine
         = vector_dot_product(v, w) / (vector_length(v) * vector_length(w));
 
-    float angle_in_degrees = acos(cosine) * 180 / M_PI;
+    NN_TYPE angle_in_degrees = acos(cosine) * 180 / M_PI;
 
     return angle_in_degrees;
 
@@ -713,12 +740,12 @@ error:
  * @note This function assumes that the vectors are non-null.
  * @note Two vectors are perpendicular if their dot product is 0.
  */
-int vector_is_perpendicular(vector *v, vector *w)
+int vector_is_perpendicular(const vector *v, const vector *w)
 {
     VECTOR_CHECK(v);
     VECTOR_CHECK(w);
 
-    float dot_product = vector_dot_product(v, w);
+    NN_TYPE dot_product = vector_dot_product(v, w);
 
     return dot_product == 0 ? 1 : 0;
 
@@ -727,15 +754,16 @@ error:
 }
 
 
-int vector_is_equal(vector *v, vector *w)
+int vector_is_equal(const vector *v, const vector *w)
 {
     VECTOR_CHECK(v);
     VECTOR_CHECK(w);
 
-    if(v->length != w->length)
+    if (v->length != w->length)
         return 0;
-    
-    if(memcmp(v->number.values, w->number.values, v->length * sizeof(NN_TYPE)) == 0) {
+
+    if (memcmp(v->number.values, w->number.values, v->length * sizeof(NN_TYPE))
+        == 0) {
         return 1;
     }
 
@@ -745,8 +773,53 @@ error:
     return -1;
 }
 
+/**
+ * Counts the number of non-zero elements in a vector.
+ *
+ * This function counts the number of non-zero elements in a given vector using
+ * SIMD instructions for optimized performance. It processes 4 elements at a
+ * time and uses OpenMP to parallelize the loop, reducing the overall
+ * computation time.
+ *
+ * @param v A pointer to the vector whose non-zero elements are to be counted.
+ *
+ * @return The number of non-zero elements in the vector.
+ *
+ * @throws If the vector is NULL, an error is thrown.
+ */
+size_t vector_non_zero_length(const vector *v)
+{
+    size_t count = 0;
 
-void vector_print(vector *instance)
+// Process 4 elements at a time using SIMD
+#pragma omp parallel for simd reduction(+ : count)
+    for (size_t idx = 0; idx < v->length / 4 * 4; idx += 4) {
+        // Load 4 elements from the array
+        simde__m128 values = simde_mm_loadu_ps(&VECTOR(v, idx));
+
+        // Compare elements with zero
+        simde__m128 zero = simde_mm_setzero_ps();
+        simde__m128 cmp  = simde_mm_cmpneq_ps(values, zero);
+
+        // Convert comparison results to integer mask
+        int mask = simde_mm_movemask_ps(cmp);
+
+        // Count the number of non-zero elements in the mask
+        count += __builtin_popcount(mask);
+    }
+
+    // Process any remaining elements
+    for (size_t idx = v->length / 4 * 4; idx < v->length; idx++) {
+        if (VECTOR(v, idx) != 0.0f) {
+            count++;
+        }
+    }
+
+    return count;
+}
+
+
+void vector_print(const vector *instance)
 {
     VECTOR_CHECK(instance);
 

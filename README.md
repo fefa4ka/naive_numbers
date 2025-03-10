@@ -155,6 +155,7 @@ Macros for loop for iterating over the elements of the vector and matrix:
 | `matrix_trace` | `matrix *A` | returns the trace of the matrix `A`, which is defined as the sum of the elements on the main diagonal.. |
 | `matrix_frobenius_norm` | `matrix *A` | returns the Frobenius norm of a matrix. |
 | `matrix_frobenius_norm_by_trace` | `matrix *A` | returns the Frobenius norm of a matrix, computed using the trace of the matrix. |
+| `matrix_eigen` | `matrix *A` | returns the eigenvalues and eigenvectors of the matrix `A`. |
 
 ### Vectors Operations
 | Function | Arguments | Description |
@@ -175,7 +176,7 @@ This functions updates the elements of vector `v` by adding/substracting/multipl
 | Function | Arguments |
 | - | - |
 | `vector_addition` | `vector *v, number *w` |
-| `vector_substraction` | `vector *v, number *w` |
+| `vector_subtraction` | `vector *v, number *w` |
 | `vector_multiplication` | `vector *v, number *w` |
 | `vector_division` | `vector *v, number *w` |
 
@@ -198,7 +199,7 @@ This functions updates the elements of matrix `A` by adding/substracting/multipl
 | Function | Arguments |
 | - | - |
 | `matrix_addition` | `matrix *A, number *B` |
-| `matrix_substraction` | `matrix *A, number *B` |
+| `matrix_subtraction` | `matrix *A, number *B` |
 | `matrix_multiplication` | `matrix *A, number *B` |
 | `matrix_division` | `matrix *A, number *B` |
 
@@ -213,4 +214,3 @@ This functions updates the elements of matrix `A` by adding/substracting/multipl
 | Function | Arguments | Description |
 | - | - | - |
 | `matrix_is_equal` | `matrix *A, matrix *B` | checks if the two matricies `A` and `B` are equal. It returns 1 if they are equal and 0 otherwise. |
-

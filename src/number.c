@@ -23,11 +23,12 @@ number *number_create(NN_TYPE value)
 {
     number *instance;
 
-    instance = malloc(sizeof(vector));
+    instance = malloc(sizeof(number));
     CHECK_MEMORY(instance);
 
     instance->type    = NN_TYPE_ENUM;
     instance->floated = value;
+    instance->ref_count = 1;
 
     return instance;
 
@@ -35,15 +36,16 @@ error:
     return NULL;
 }
 
-number *integer_create(unsigned int value)
+number *integer_create(int value)
 {
     number *instance;
 
-    instance = malloc(sizeof(vector));
+    instance = malloc(sizeof(number));
     CHECK_MEMORY(instance);
 
     instance->type    = NN_INTEGER;
     instance->integer = value;
+    instance->ref_count = 1;
 
     return instance;
 
@@ -55,11 +57,12 @@ number *float_create(float value)
 {
     number *instance;
 
-    instance = malloc(sizeof(vector));
+    instance = malloc(sizeof(number));
     CHECK_MEMORY(instance);
 
     instance->type    = NN_FLOAT;
     instance->floated = value;
+    instance->ref_count = 1;
 
     return instance;
 
@@ -71,11 +74,12 @@ number *double_create(double value)
 {
     number *instance;
 
-    instance = malloc(sizeof(vector));
+    instance = malloc(sizeof(number));
     CHECK_MEMORY(instance);
 
     instance->type    = NN_DOUBLE;
     instance->doubled = value;
+    instance->ref_count = 1;
 
     return instance;
 
@@ -139,4 +143,19 @@ error:
     return 1;
 }
 
+number *number_ref(number *n) {
+     if (n) {
+         atomic_fetch_add(&n->ref_count, 1);
+     }
+     return n;
+ }
+
+void number_unref(number *n) {
+     if (n && atomic_load(&n->ref_count) > 0) {
+         if (atomic_fetch_sub(&n->ref_count, 1) == 1) {
+             // This was the last reference
+             number_delete(n);
+         }
+     }
+ }
 

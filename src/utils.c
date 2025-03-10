@@ -1,38 +1,39 @@
 #include "utils.h"
 
 
-NN_TYPE *nn_uniq_numbers(NN_TYPE *values, size_t size, size_t *new_size_ptr) {
-    NN_TYPE *uniq;
-    
-    uniq = malloc(size * sizeof(NN_TYPE));
-    CHECK_MEMORY(uniq);
-    
+NN_TYPE *nn_unique_numbers(NN_TYPE *values, size_t size, size_t *new_size_ptr)
+{
+    NN_TYPE *unique;
+
+    unique = malloc(size * sizeof(NN_TYPE));
+    CHECK_MEMORY(unique);
+
     size_t front, back;
     size_t new_size;
-    
-    new_size = 1;
-    uniq[0] = values[0];
-    
-    for (front = 1; front < size; front++)
-    {
+
+    new_size  = 1;
+    unique[0] = values[0];
+
+    for (front = 1; front < size; front++) {
         for (back = 0; back < new_size; back++) {
-            if(values[front] == uniq[back]) {
+            if (values[front] == unique[back]) {
                 break;
             }
         }
-        
-        if(back == new_size) {
-            uniq[new_size++] = values[front];
+
+        if (back == new_size) {
+            unique[new_size++] = values[front];
         }
     }
-    
-    uniq = realloc(uniq, new_size * sizeof(NN_TYPE));
-    CHECK_MEMORY(uniq);
+
+    unique = realloc(unique, new_size * sizeof(NN_TYPE));
+    CHECK_MEMORY(unique);
     *new_size_ptr = new_size;
-    
-    return uniq;
+
+    return unique;
 
 error:
-    if(uniq) free(uniq);
+    if (unique)
+        free(unique);
     return NULL;
 }
