@@ -67,3 +67,9 @@ add_test(NAME matrix
     COMMAND test_matrix)
 add_test(NAME probability
     COMMAND test_probability)
+
+# Chained operations test
+add_executable(test_chained_operations test/chained_operations.c)
+target_link_libraries(test_chained_operations nn_probability)
+add_test(NAME chained_operations
+    COMMAND test_chained_operations)
