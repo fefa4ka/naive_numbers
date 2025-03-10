@@ -358,7 +358,6 @@ matrix *matrix_multiplication(matrix *A, matrix *B)
     }
 
     number_unref((number*)A);
-    number_unref((number*)A);
     number_unref((number*)B);
 
     return multiplicated;
