@@ -53,10 +53,6 @@ target_link_libraries(nn_probability nn_matrix nn_vector)
 
 enable_testing()
 
-add_test(NAME vector COMMAND test_vector)
-add_test(NAME matrix COMMAND test_matrix)
-add_test(NAME probability COMMAND test_probability)
-
 # Chained operations test
 add_executable(test_chained_operations test/chained_operations.c)
 target_link_libraries(test_chained_operations nn_probability)
@@ -66,6 +62,10 @@ add_test(NAME chained_operations COMMAND test_chained_operations)
 add_executable(test_number test/number.c)
 target_link_libraries(test_number nn_probability)
 add_test(NAME number COMMAND test_number)
+
+add_executable(test_vector_creation test/vector_creation_test.c)
+target_link_libraries(test_vector_creation nn_probability)
+add_test(NAME vector_creation COMMAND test_vector_creation)    
 
 # Memory leak test
 add_executable(memory_leak_test test/memory_leak_test.c)

@@ -79,7 +79,7 @@ int test_vector_manipulation() {
     vector *v2 = vector_from_list(3, (NN_TYPE[]){4.0, 5.0, 6.0});
     
     // Test vector_addition
-    vector *result = vector_addition(vector_clone(v1), (number*)v2);
+    vector *result = vector_addition(vector_clone(v1),    number_ref((number*)v2));
     test_assert(result != NULL, "vector_addition returns non-NULL");
     test_assert(VECTOR(result, 0) == 5.0, "vector_addition correctly adds first elements");
     test_assert(VECTOR(result, 2) == 9.0, "vector_addition correctly adds last elements");
@@ -99,7 +99,7 @@ int test_vector_manipulation() {
     test_assert(VECTOR(scaled, 2) == 6.0, "vector_multiplication correctly scales last element");
     
     // Test vector_dot_product
-    NN_TYPE dot = vector_dot_product(v1, (vector*)number_ref((number*)v2));
+    NN_TYPE dot = vector_dot_product(v1, v2);
     test_assert(fabs(dot - 32.0) < 0.0001, "vector_dot_product calculates correct result");
     
     // Test vector_length

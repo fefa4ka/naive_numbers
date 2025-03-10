@@ -154,22 +154,11 @@ error:
 
 vector *vector_clone(const vector *original)
 {
-    vector *clone;
     VECTOR_CHECK(original);
 
-    clone = vector_create(original->length);
-    CHECK_MEMORY(clone);
-    
-    // Copy the values
-    memcpy(clone->number.values, original->number.values, 
-           original->length * sizeof(NN_TYPE));
-
-    return clone;
+    return vector_from_list(original->length, original->number.values);
 
 error:
-    if (clone) {
-        number_delete((number*)clone);
-    }
     return NULL;
 }
 
@@ -398,8 +387,6 @@ NN_TYPE vector_dot_product(const vector *v, const vector *w)
 
     // #pragma omp parallel for simd reduction (+:product)
     VECTOR_FOREACH(v) { product += VECTOR(v, index) * VECTOR(w, index); }
-
-    number_unref((number*)w);
 
     return product;
 
