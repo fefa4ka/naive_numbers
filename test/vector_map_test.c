@@ -307,8 +307,7 @@ int test_rounding_vector_map() {
     test_assert(original != NULL, "Original vector created successfully");
     
     // Apply rounding function
-    // vector *rounded = vector_map(vector_clone(original), round_to_int); // This leads to corruption of original vector
-    vector *rounded = vector_map(original, round_to_int);
+    vector *rounded = vector_map(vector_clone(original), round_to_int);
     test_assert(rounded != NULL, "Rounding mapping successful");
     
     // Verify rounding
@@ -322,7 +321,7 @@ int test_rounding_vector_map() {
     test_assert(VECTOR(rounded, 7) == 4.0, "Value 3.51 rounded to 4.0");
     
     // Clean up
-    /*number_delete((number*)original);*/
+    number_delete((number*)original);
     number_delete((number*)rounded);
     
     return 0;
