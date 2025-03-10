@@ -20,6 +20,38 @@ While maintaining a clean API, nn is designed with performance in mind:
 
 Operations in nn are designed to be composable, allowing you to build complex computations from simple building blocks. Many functions return the modified object, enabling method chaining.
 
+#### Operation Chaining
+
+One of the most powerful features of the nn library is the ability to chain operations together. Since most transformation functions modify objects in-place and return the modified object, you can chain multiple operations in a single expression:
+
+```c
+// Create a vector and perform multiple operations in a single chain
+vector *v = vector_create(5);
+vector_seed(v, 1.0);
+vector *result = vector_addition(
+                   vector_multiplication(
+                     vector_map(v, sqrt),
+                     number_create(2.0)
+                   ),
+                   float_create(1.0)
+                 );
+// This chain: takes v, applies sqrt to each element, multiplies by 2, adds 1
+
+// Matrix operation chaining
+matrix *m = matrix_create(3, 3);
+matrix_seed(m, 1.0);
+matrix *processed = matrix_map(
+                      matrix_multiplication(
+                        m, 
+                        matrix_transpose(matrix_clone(m))
+                      ),
+                      sqrt
+                    );
+// This chain: multiplies m by its transpose, then takes sqrt of each element
+```
+
+This chaining approach reduces the need for temporary variables and makes the code more concise and readable. It's particularly useful for complex mathematical operations that would otherwise require multiple intermediate steps.
+
 ### 4. Consistent Memory Management
 
 The library follows a consistent pattern for memory management:
@@ -171,6 +203,57 @@ matrix *L, *U;
 int rank = matrix_lu_decomposition(A, &L, &U);
 ```
 
+## Practical Examples
+
+### Complex Vector Operations
+
+Here's an example of how to use operation chaining for complex vector manipulations:
+
+```c
+// Normalize a vector, scale it, and calculate its dot product with another vector
+vector *v1 = vector_from_list(3, (NN_TYPE[]){3.0, 4.0, 5.0});
+vector *v2 = vector_from_list(3, (NN_TYPE[]){1.0, 2.0, 3.0});
+
+// Create a unit vector from v1, scale it by 2, and add v2
+vector *result = vector_addition(
+                   vector_multiplication(
+                     vector_unit(v1),
+                     float_create(2.0)
+                   ),
+                   (number *)v2
+                 );
+
+// Calculate dot product with original vector
+NN_TYPE dot = vector_dot_product(result, v1);
+
+// Clean up
+number_delete(v1);
+number_delete(v2);
+number_delete(result);
+```
+
+### Matrix Transformations
+
+Here's how to chain operations for matrix transformations:
+
+```c
+// Create a matrix, calculate its transpose, multiply by original, and extract diagonal
+matrix *m = matrix_create_from_list(2, 2, (NN_TYPE[]){1.0, 2.0, 3.0, 4.0});
+
+// Create m * m^T (a symmetric matrix)
+matrix *symmetric = matrix_multiplication(m, matrix_transpose(matrix_clone(m)));
+
+// Extract diagonal and normalize
+vector *diagonal = matrix_column_vector(symmetric, 0);
+vector *normalized = vector_unit(diagonal);
+
+// Clean up
+number_delete(m);
+number_delete(symmetric);
+number_delete(diagonal);
+number_delete(normalized);
+```
+
 ## Conclusion
 
-The Naive Numbers library provides a powerful yet simple framework for numerical computing in C. By following its design philosophy and leveraging its optimized operations, you can build efficient numerical applications with clean, maintainable code.
+The Naive Numbers library provides a powerful yet simple framework for numerical computing in C. By following its design philosophy and leveraging its optimized operations, you can build efficient numerical applications with clean, maintainable code. The ability to chain operations makes complex mathematical expressions more readable and reduces the need for temporary variables, leading to more elegant code.
