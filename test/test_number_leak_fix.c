@@ -58,8 +58,8 @@ int test_vector_reference_counting() {
     test_assert(v1->number.ref_count == 1, "Reference count decremented to 1");
     
     // Clean up vectors
-    number_delete(v1);
-    number_delete(v2);
+    number_delete((number*)v1);
+    number_delete((number*)v2);
     
     return 0;
 }
