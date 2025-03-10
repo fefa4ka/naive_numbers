@@ -148,6 +148,9 @@ matrix *matrix_clone(matrix *original)
     return instance;
 
 error:
+    if (instance) {
+        free(instance);
+    }
     return NULL;
 }
 
@@ -287,10 +290,10 @@ matrix *matrix_transpose(matrix *instance)
     }
 
     if (instance_rows != transposed_rows) {
-        number_delete(instance);
+        number_unref((number*)instance);
         instance = transposed;
     } else {
-        number_delete(transposed);
+        number_unref((number*)transposed);
     }
 
     MATRIX_CHECK(instance);
@@ -354,6 +357,7 @@ matrix *matrix_multiplication(matrix *A, matrix *B)
         }
     }
 
+    number_unref((number*)A);
     number_unref((number*)B);
 
     return multiplicated;
